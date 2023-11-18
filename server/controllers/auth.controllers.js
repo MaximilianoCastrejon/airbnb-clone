@@ -1,0 +1,142 @@
+import * as async_errors from "../errors/errors.barrel.js";
+import { StatusCodes } from "http-status-codes";
+import User from "../models/user.model.js";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { createAccessToken } from "../libs/createJWT.js";
+import { s3, s3Name } from "../db/s3.client.js";
+import {
+  GetObjectCommand,
+  NotFound,
+  PutObjectCommand,
+} from "@aws-sdk/client-s3";
+import { randomImageName } from "../libs/createID.js";
+import sharp from "sharp";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { TOKEN_SECRET } from "../config.js";
+
+export const user = async (req, res) => {
+  const { email } = req.query;
+  if (email) {
+    const foundUser = await User.findOne({ email: email });
+
+    if (foundUser) return res.status(StatusCodes.OK).json({ hasAccount: true });
+  }
+
+  res.send("Hola");
+};
+
+export const userDetails = async (req, res) => {
+  const { id } = req.params;
+
+  const user = await User.findById(id);
+  if (!user) throw new NotFound("User not found in database");
+  const queryParams = {
+    Bucket: s3Name,
+    Key: user.profile_image,
+  };
+  const command = new GetObjectCommand(queryParams);
+  const url = await getSignedUrl(s3, command, { expiresIn: 60 * 60 * 3 });
+  const userInfo = { ...user, profile_image_url: url };
+
+  res.status(StatusCodes.OK).json(userInfo);
+};
+
+export const login = async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password)
+    throw new async_errors.BadRequestError(
+      "Include both the email and password"
+    );
+  const foundUser = await User.findOne({ email });
+  if (!foundUser)
+    throw new async_errors.AuthenticationError("Verify email and password");
+
+  const isMatch = await bcrypt.compare(password, foundUser.password);
+  if (!isMatch) {
+    throw new async_errors.AuthenticationError("Verify email and password");
+  }
+  const token = await createAccessToken({ id: foundUser._id });
+  res.cookie("token", token);
+
+  return res.status(StatusCodes.OK).json({
+    id: foundUser._id,
+    username: foundUser.username,
+    profile_image: foundUser.profile_image,
+    email: foundUser.email,
+  });
+};
+
+export const logout = async (req, res) => {
+  res.send("Hola");
+};
+
+export const signup = async (req, res) => {
+  const { username, email, password } = req.body;
+  if (!username || !email || !password) {
+    throw new async_errors.BadRequestError("Please fill out every field");
+  }
+
+  const buffer = await sharp(req.file.buffer)
+    .resize({ height: 500, width: 500, fit: "contain" })
+    .toBuffer();
+
+  const imageName = randomImageName();
+  const params = {
+    Bucket: s3Name,
+    Key: imageName,
+    Body: buffer,
+    ContentType: req.file.mimetype,
+  };
+
+  const command = new PutObjectCommand(params);
+
+  await s3.send(command);
+
+  const user = {
+    username,
+    email,
+    password: bcrypt.hashSync(
+      password,
+      await bcrypt.genSalt(10),
+      (err, hash) => {
+        if (err) {
+          console.log(err);
+        } else {
+          return hash;
+        }
+      }
+    ),
+    profile_image: imageName,
+  };
+  const newUser = await User.create(user);
+  if (!newUser)
+    throw new async_errors.UnprocessableError("Data for user unprocessable");
+  const token = await createAccessToken({ id: newUser._id });
+
+  res.cookie("token", token);
+  res.status(StatusCodes.OK).json({
+    id: newUser._id,
+    username: newUser.username,
+    profile_image: newUser.profile_image,
+    email: newUser.email,
+  });
+};
+
+export const verifyToken = async (req, res) => {
+  const { token } = req.cookies;
+  if (!token) return res.send(false);
+
+  jwt.verify(token, TOKEN_SECRET, async (error, user) => {
+    if (error) return res.status(StatusCodes.UNAUTHORIZED).send(false);
+
+    const userFound = await User.findById(user.id);
+    if (!userFound) return res.status(StatusCodes.UNAUTHORIZED).send(false);
+    return res.json({
+      id: userFound._id,
+      username: userFound.username,
+      email: userFound.email,
+      profile_image: userFound.profile_image,
+    });
+  });
+};
