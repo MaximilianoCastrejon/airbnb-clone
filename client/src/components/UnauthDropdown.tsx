@@ -1,110 +1,106 @@
-import { MutableRefObject, useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import Login from './modals/Login';
 import HelpCenter from './modals/HelpCenter';
 import YourHome from './modals/YourHome';
 import SignUp from './modals/SignUp';
 
-function UnauthDropdown({
-  dropdown
-}: {
-  dropdown: MutableRefObject<HTMLDivElement | null>;
-}) {
-  // Add class for animation when option clicked.
-  // Add out animation class when close event.
-  // Remove out class when option clicked again
+interface UnauthDropdownProps {
+  toggleDropdown: () => void; // Ensure correct typing for toggleDropdown prop
+  drowpdownRender: boolean;
+}
 
-  // modal-in already as class
-  // Click option => render
-  // animation happens
-  // click close => add modal-out
-  // animation close
-  // remove modal-out
-  // set render to empty string
+function UnauthDropdown({
+  toggleDropdown,
+  drowpdownRender
+}: UnauthDropdownProps) {
+  /* ** CHECK ** */
   const modalRef = useRef<HTMLDivElement | null>(null);
   const [renderedModal, setRenderedModal] = useState(String);
-  const [modalShow, setModalShow] = useState(false);
+  const dropdown = useRef<HTMLDivElement | null>(null);
+
+  const [isModalActive, setIsModalActive] = useState(false);
 
   const toggleModal = (
     e: React.MouseEvent<HTMLAnchorElement | HTMLDivElement | HTMLButtonElement>
   ) => {
+    // Modal is selected to render to start animation
+    // After being toggled, closing animation class is added, thus it starts the animation
+    // Modal is no longer rendered, and closing animation is removed to add it back, in case modal gets opened and closed again
     const modalId = e.currentTarget.id;
-
-    if (modalShow) {
+    if (isModalActive) {
+      // if -> Remove
       modalRef.current?.classList.add('modal-out');
       modalRef.current?.addEventListener('animationend', () => {
         setRenderedModal('');
-        setModalShow(false);
+        setIsModalActive(false);
         modalRef.current?.classList.remove('modal-out');
       });
     } else {
-      // If it's closed, open it
+      // if not -> Render
       setRenderedModal(modalId);
-      setModalShow(true);
+      setIsModalActive(true);
+      toggleDropdown();
     }
-
-    // setRenderedModal(modalId);
-    // setModalShow((current) => !current);
   };
 
-  useEffect(() => {
-    const modalClass = modalShow ? 'modal-in' : 'modal-out';
-    modalRef.current?.classList.add(modalClass);
-  }, [modalShow]);
+  /* ** CHECK ** */
   return (
     <>
       {/* <!-- Dropdown menu --> */}
-      <div
-        id="dropdownDivider"
-        ref={dropdown}
-        aria-labelledby="dropdownDividerButton"
-        className="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700 dark:divide-gray-600"
-      >
-        <ul
-          className="py-2 text-sm text-gray-700 dark:text-gray-200"
+      {drowpdownRender && (
+        <div
+          id="dropdownDivider"
+          ref={dropdown}
           aria-labelledby="dropdownDividerButton"
+          className="z-10 bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700 dark:divide-gray-600"
         >
-          <li>
-            <a
-              onClick={(e) => toggleModal(e)}
-              id="signup"
-              className="block cursor-pointer font-semibold px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
-            >
-              Sing up
-            </a>
-          </li>
-          <li>
-            <a
-              onClick={(e) => toggleModal(e)}
-              id="login"
-              className="block  cursor-pointer px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
-            >
-              Login
-            </a>
-          </li>
-        </ul>
-        <div className="py-2">
-          <ul>
+          <ul
+            className="py-2 text-sm text-gray-700 dark:text-gray-200"
+            aria-labelledby="dropdownDividerButton"
+          >
             <li>
               <a
                 onClick={(e) => toggleModal(e)}
-                id="home"
-                className="block cursor-pointer px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
+                id="signup"
+                className="block cursor-pointer font-semibold px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
               >
-                Airbnb your home
+                Sing up
               </a>
             </li>
             <li>
               <a
                 onClick={(e) => toggleModal(e)}
-                id="help"
-                className="block cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white"
+                id="login"
+                className="block  cursor-pointer px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
               >
-                Help Center
+                Login
               </a>
             </li>
           </ul>
+          <div className="py-2">
+            <ul>
+              <li>
+                <a
+                  onClick={(e) => toggleModal(e)}
+                  id="home"
+                  className="block cursor-pointer px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
+                >
+                  Airbnb your home
+                </a>
+              </li>
+              <li>
+                <a
+                  onClick={(e) => toggleModal(e)}
+                  id="help"
+                  className="block cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white"
+                >
+                  Help Center
+                </a>
+              </li>
+            </ul>
+          </div>
         </div>
-      </div>
+      )}
       {renderedModal === 'login' && (
         <Login modalRef={modalRef} toggleModal={toggleModal} />
       )}

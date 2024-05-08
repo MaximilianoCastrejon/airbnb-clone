@@ -1,27 +1,29 @@
 import { useNavigate } from 'react-router-dom';
 import AuthDropdown from './AuthDropdown';
 import UnauthDropdown from './UnauthDropdown';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthProvider.tsx';
 import axiosInstance from '../api/axios.instance';
 
 function Searchbar() {
   const navigate = useNavigate();
-  const dropdown = useRef<HTMLDivElement | null>(null);
+  const [drowpdownRender, setDrowpdownRender] = useState<boolean>(false);
   const [userProfileImage, setUserProfileImage] = useState<string>();
+
   const toggleDropdown = () => {
-    dropdown.current?.classList.toggle('hidden');
+    setDrowpdownRender((prev) => !prev);
   };
+
   const { userContext, isAuthenticated } = useAuth();
+
   useEffect(() => {
-    console.log(isAuthenticated);
     if (isAuthenticated) {
       axiosInstance.get(`/auth/user/${userContext?.id}`).then((user) => {
-        console.log(user);
         setUserProfileImage(user.data.profile_image_url);
       });
     }
   }, [userContext, isAuthenticated]);
+
   return (
     <nav className="p-4 flex justify-between relative">
       <a
@@ -90,9 +92,15 @@ function Searchbar() {
         </button>
         <div className="absolute mt-1 right-0">
           {isAuthenticated ? (
-            <AuthDropdown dropdown={dropdown} />
+            <AuthDropdown
+              toggleDropdown={toggleDropdown}
+              drowpdownRender={drowpdownRender}
+            />
           ) : (
-            <UnauthDropdown dropdown={dropdown} />
+            <UnauthDropdown
+              toggleDropdown={toggleDropdown}
+              drowpdownRender={drowpdownRender}
+            />
           )}
         </div>
       </div>

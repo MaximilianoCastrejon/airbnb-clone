@@ -2,13 +2,12 @@ import mongoose from "mongoose";
 
 const AmenitySchema = new mongoose.Schema(
   {
-    name: {
-      type: String,
-      unique: true,
+    property_id: {
+      type: mongoose.Schema.Types.ObjectId,
       require: true,
     },
-    icon_path: {
-      type: String,
+    amenity_id: {
+      type: mongoose.Schema.Types.ObjectId,
       require: true,
     },
     active: {

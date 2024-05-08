@@ -14,6 +14,7 @@ import { randomImageName } from "../libs/createID.js";
 import sharp from "sharp";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { TOKEN_SECRET } from "../config.js";
+import Listing from "../models/properties/listings/listing.model.js";
 
 export const user = async (req, res) => {
   const { email } = req.query;
@@ -48,22 +49,23 @@ export const login = async (req, res) => {
     throw new async_errors.BadRequestError(
       "Include both the email and password"
     );
-  const foundUser = await User.findOne({ email });
-  if (!foundUser)
+  const userFound = await User.findOne({ email });
+  if (!userFound)
     throw new async_errors.AuthenticationError("Verify email and password");
 
-  const isMatch = await bcrypt.compare(password, foundUser.password);
+  const isMatch = await bcrypt.compare(password, userFound.password);
   if (!isMatch) {
     throw new async_errors.AuthenticationError("Verify email and password");
   }
-  const token = await createAccessToken({ id: foundUser._id });
+  const token = await createAccessToken({ id: userFound._id });
   res.cookie("token", token);
 
   return res.status(StatusCodes.OK).json({
-    id: foundUser._id,
-    username: foundUser.username,
-    profile_image: foundUser.profile_image,
-    email: foundUser.email,
+    id: userFound._id,
+    username: userFound.username,
+    email: userFound.email,
+    profile_image: userFound.profile_image,
+    properties: userFound.properties,
   });
 };
 
@@ -77,7 +79,7 @@ export const signup = async (req, res) => {
     throw new async_errors.BadRequestError("Please fill out every field");
   }
 
-  const buffer = await sharp(req.file.buffer)
+  const buffer = await sharp(req.file.buffer) // Image uploaded thorugh multer
     .resize({ height: 500, width: 500, fit: "contain" })
     .toBuffer();
 
@@ -113,13 +115,22 @@ export const signup = async (req, res) => {
   if (!newUser)
     throw new async_errors.UnprocessableError("Data for user unprocessable");
   const token = await createAccessToken({ id: newUser._id });
-
   res.cookie("token", token);
   res.status(StatusCodes.OK).json({
     id: newUser._id,
     username: newUser.username,
     profile_image: newUser.profile_image,
     email: newUser.email,
+  });
+};
+
+export const deleteUser = async (req, res, next) => {
+  User.findById(req.params.user_id, function (err, user) {
+    Property.deleteMany({ _id: { $in: user.properties } }, function (err) {
+      if (err) return next(err);
+      user.remove();
+      res.status(StatusCodes.OK).send("user deleted succesfuly");
+    });
   });
 };
 
@@ -132,11 +143,12 @@ export const verifyToken = async (req, res) => {
 
     const userFound = await User.findById(user.id);
     if (!userFound) return res.status(StatusCodes.UNAUTHORIZED).send(false);
-    return res.json({
+    return res.status(StatusCodes.OK).json({
       id: userFound._id,
       username: userFound.username,
       email: userFound.email,
       profile_image: userFound.profile_image,
+      properties: userFound.properties,
     });
   });
 };

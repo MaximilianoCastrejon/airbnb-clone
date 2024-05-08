@@ -11,6 +11,7 @@ import * as request from '../api/auth.ts';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// For whenever any of the context methods or fields want to be used
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) throw new Error('useAuth must be used within an AuthProvider');
@@ -37,12 +38,35 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         if (res.status === 200) {
           setUserContext(res.data);
           setIsAuthenticated(true);
+          // return getListings(res.data.id);
         }
       })
+      // .then((listingsRes) => {
+      //   const listingsFound = () => {
+      //     return (
+      //       userContext &&
+      //       listingsRes &&
+      //       listingsRes.status === 200 &&
+      //       listingsRes.data.listings.length !== 0
+      //     );
+      //   };
+
+      //   if (listingsFound()) {
+      //     console.log('HOLAAAAA');
+      //     setUserContext((prev) => {
+      //       if (prev) return { ...prev, listings: true };
+      //       return prev;
+      //     });
+      //   }
+      //   if (listingsRes?.status === 200) {
+      //     setUserContext((userContext) => userContext);
+      //   }
+      // })
       .catch((error) => {
-        setErrors(error.response.data.message);
+        setErrors(error.response.data);
       });
   };
+
   const signup = async (credentials: SignupCredentials) => {
     // Implement your authentication logic here
     // Set the user if authentication is successful
@@ -103,11 +127,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     isLoggedIn();
   }, []);
 
+  const clearErrors = () => {
+    setErrors([]);
+  };
+
   const contextValue: AuthContextType = {
     userContext,
     login,
     logout,
     signup,
+    clearErrors,
     isAuthenticated,
     errors,
     loading

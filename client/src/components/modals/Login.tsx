@@ -1,4 +1,4 @@
-import { MutableRefObject, useState } from 'react';
+import { MutableRefObject, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthProvider.tsx';
 
@@ -17,8 +17,11 @@ function Login({
   ) => void;
 }) {
   const [user, setUser] = useState<LoginUser>({ email: '', password: '' });
+  const [showInvalidCredentials, setShowInvalidCredentials] =
+    useState<boolean>();
+
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, errors, clearErrors } = useAuth();
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUser({
@@ -29,18 +32,31 @@ function Login({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    login(user)
-      .then(() => {
-        alert('Login successfull');
+    // Find a way to set up TS get a response from the backend and verify the statusCode
+    login(user).then(() => {
+      if (errors.length === 0) {
         navigate('/');
-      })
-      .catch(() => alert('Login unsuccessful'));
+      }
+      // else {
+      //   alert('Login unsuccessful');
+      // }
+    });
   };
+  useEffect(() => {
+    if (errors.length === 0) {
+      setShowInvalidCredentials(false);
+    } else {
+      setShowInvalidCredentials(true);
+    }
+  }, [errors]);
   return (
     <div
       id="modal-container"
       ref={modalRef}
-      onClick={(e) => toggleModal(e)}
+      onClick={(e) => {
+        toggleModal(e);
+        clearErrors();
+      }}
       className="modal-in fixed top-0 left-0 w-screen h-screen flex justify-center items-center "
     >
       <div className="modal-background w-full h-full flex justify-center items-center">
@@ -53,7 +69,10 @@ function Login({
               type="button"
               className="absolute top-3 left-3 text-gray-400 bg-transparent hover:text-primary rounded-lg text-sm w-8 h-8 ml-auto inline-flex justify-center items-center  dark:hover:text-primary"
               data-modal-hide="edit-modal"
-              onClick={(e) => toggleModal(e)}
+              onClick={(e) => {
+                toggleModal(e);
+                clearErrors();
+              }}
             >
               <svg
                 className="w-3 h-3"
@@ -79,6 +98,24 @@ function Login({
               <h1 className="mt-2 mb-6 text-2xl font-semibold pl-4 leading-tight">
                 Welcome to Airbnb
               </h1>
+              {showInvalidCredentials && (
+                <div className="w-full flex justify-center items-center rounded-lg px-4 py-2 border mb-6 border-gray-300">
+                  <div className="rounded-full h-12 w-12 bg-red-600 p-4">
+                    <span className="flex justify-center items-center w-full h-full text-3xl text-white font-poppins">
+                      !
+                    </span>
+                  </div>
+                  <div className="w-full m-2">
+                    <p className="font-semibold w-full">
+                      Vamos a intentarlo de nuevo
+                    </p>
+                    <p className="text-gray-500 w-full text-sm">
+                      Datos de inicio de sesión incorrectos. Intentarlo de
+                      nuevo.
+                    </p>
+                  </div>
+                </div>
+              )}
               <input
                 type="text"
                 name="email"

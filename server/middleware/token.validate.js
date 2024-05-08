@@ -1,5 +1,5 @@
 import * as jwt from "jsonwebtoken";
-import * as async_errors from "./error-handler.middleware";
+import * as async_errors from "./error-handler.middleware.js";
 
 export const authRequired = (req, res, next) => {
   const { token } = req.cookies;

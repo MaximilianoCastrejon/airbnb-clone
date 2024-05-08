@@ -19,6 +19,17 @@ const UserSchema = new mongoose.Schema(
       type: String,
       require: true,
     },
+    isSuperHost: {
+      type: Boolean,
+    },
+    // Update USER whenever user click to create a new listing to grant access to host panel
+    // is_host: {
+    //   type: Boolean,
+    //   default: false,
+    // },
+    properties: {
+      type: [String],
+    },
   },
   { timestamps: true }
 );

@@ -1,9 +1,10 @@
 import crypto from "crypto";
 
-function formatDate(date, format) {
-  if (!date) {
-    return ""; // or handle the case when date is undefined
-  }
+function formatDate(format) {
+  // if (!date) {
+  //   return ""; // or handle the case when date is undefined
+  // }
+  const date = new Date();
   const map = {
     mm: date.getMonth() + 1,
     dd: date.getDate(),
@@ -18,6 +19,6 @@ function formatDate(date, format) {
 }
 
 export const randomImageName = (bytes = 32) => {
-  const date = formatDate(new Date(), "yyyymmdd");
+  const date = formatDate("yyyymmdd");
   return `${date}_${crypto.randomBytes(bytes).toString("hex")}`;
 };

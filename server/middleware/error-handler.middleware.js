@@ -8,7 +8,9 @@ export const errorHandler = (err, req, res, next) => {
   let { statusCode, status, message } = err;
   if (!statusCode) statusCode = 500;
   if (!status) status = "error";
+  if (!message) status = "error";
   res.status(statusCode).json({
+    statusCode,
     status,
     message,
   });

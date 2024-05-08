@@ -3,8 +3,9 @@ import { AxiosResponse } from 'axios';
 // Define the type for your authentication context value
 export interface AuthContextType {
   userContext: User | null; // The authenticated user or null if not authenticated
-  login: (credentials: LoginCredentials) => Promise<void>; // Function to log in
+  login: (credentials: LoginCredentials) => Promise<AxiosResponse | void>; // Function to log in
   signup: (credentials: SignupCredentials) => Promise<void>; // Function to sign up
+  clearErrors: () => void; // Function to sign up
   logout: () => void; // Function to log out
   isAuthenticated: boolean;
   errors: string[];
@@ -16,6 +17,7 @@ export interface User {
   username: string;
   email: string;
   profile_image: File | string;
+  properties: [String];
   // Other user-related fields
 }
 
@@ -29,6 +31,11 @@ export interface SignupCredentials {
 export interface LoginCredentials {
   email: string;
   password: string;
+}
+export interface ApiError {
+  status: string;
+  statusCode: number;
+  message: string;
 }
 
 export interface ApiResponse {

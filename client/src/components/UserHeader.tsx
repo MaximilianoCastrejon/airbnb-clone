@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import axiosInstance from '../api/axios.instance';
 import { useAuth } from '../context/AuthProvider.tsx';
@@ -7,16 +7,16 @@ import UnauthDropdown from './UnauthDropdown.tsx';
 
 function UserHeader() {
   const navigate = useNavigate();
+  const [drowpdownRender, setDrowpdownRender] = useState<boolean>(false);
   const [userProfileImage, setUserProfileImage] = useState<string>();
-  const dropdown = useRef<HTMLDivElement | null>(null);
 
   const toggleDropdown = () => {
-    dropdown.current?.classList.toggle('hidden');
+    setDrowpdownRender((prev) => !prev);
   };
+
   const { userContext, isAuthenticated } = useAuth();
 
   useEffect(() => {
-    console.log(isAuthenticated);
     if (isAuthenticated) {
       axiosInstance.get(`/auth/user/${userContext?.id}`).then((user) => {
         console.log(user);
@@ -95,9 +95,15 @@ function UserHeader() {
               </button>
               <div className="absolute mt-1 right-0">
                 {isAuthenticated ? (
-                  <AuthDropdown dropdown={dropdown} />
+                  <AuthDropdown
+                    toggleDropdown={toggleDropdown}
+                    drowpdownRender={drowpdownRender}
+                  />
                 ) : (
-                  <UnauthDropdown dropdown={dropdown} />
+                  <UnauthDropdown
+                    toggleDropdown={toggleDropdown}
+                    drowpdownRender={drowpdownRender}
+                  />
                 )}
               </div>
             </div>
