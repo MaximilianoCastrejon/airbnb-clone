@@ -6,11 +6,11 @@ import { useState } from 'react';
 
 function BecomeAHost() {
   const { userContext } = useAuth();
-  const [userProperties, setUserProperties] = useState();
-  axiosInstance.get(`properties/?id=${userContext?.id}`).then((res) => {
-    setUserProperties(res.data.properties);
+  const [userListings, setUserListings] = useState();
+  axiosInstance.get(`listings/?id=${userContext?.id}`).then((res) => {
+    setUserListings(res.data.listings);
   });
-  return <>{userProperties ? <BecomeAHost /> : <BecomeAHost />}</>; // If user has properties, don't load become hosts, load properties instead
+  return <>{userListings ? <BecomeAHost /> : <BecomeAHost />}</>; // If user has Listings, don't load become hosts, load Listings instead
 }
 
 export default BecomeAHost;

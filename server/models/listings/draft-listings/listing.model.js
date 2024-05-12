@@ -13,7 +13,7 @@ const validateLongitude = (value) => {
 /**
  * Form to let user retireve their progress on their accomodation posting process
  */
-const IncompletePropertySchema = new mongoose.Schema(
+const DraftListingSchema = new mongoose.Schema(
   {
     name: {
       type: String,
@@ -30,24 +30,14 @@ const IncompletePropertySchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "SubCategory",
     },
-    country: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Country",
-    },
-    state: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "State",
-    },
-    city: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "City",
-    },
+
     user_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
     address: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "DraftAddress",
     },
     latitude: {
       type: String,
@@ -122,8 +112,5 @@ const IncompletePropertySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const IncompleteProperty = mongoose.model(
-  "IncompleteProperty",
-  IncompletePropertySchema
-);
-export default IncompleteProperty;
+const DraftListing = mongoose.model("DraftListing", DraftListingSchema);
+export default DraftListing;

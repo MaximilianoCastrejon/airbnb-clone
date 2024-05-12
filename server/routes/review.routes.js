@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { handleAsyncError } from "../middleware/error-handler.middleware.js";
 import multer from "multer";
-import * as route from "../controllers/listings.controllers.js";
+import * as route from "../controllers/reviews.controllers.js";
 const router = Router();
 
 const storage = multer.memoryStorage();

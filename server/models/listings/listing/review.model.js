@@ -18,9 +18,9 @@ const ReviewSchema = new mongoose.Schema(
       ref: "Listings",
       require: true,
     },
-    entityType: {
+    subcategory: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Category",
+      ref: "Subcategory",
       require: true,
     },
     reviewee: {

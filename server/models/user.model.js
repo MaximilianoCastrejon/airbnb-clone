@@ -27,7 +27,7 @@ const UserSchema = new mongoose.Schema(
     //   type: Boolean,
     //   default: false,
     // },
-    properties: {
+    listings: {
       type: [String],
     },
   },

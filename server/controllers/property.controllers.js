@@ -10,11 +10,11 @@ import {
 import { randomImageName } from "../libs/createID.js";
 import sharp from "sharp";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import Listing from "../models/properties/Listing/Listing.model.js";
-import Price from "../models/properties/Listing/price.model.js";
+import Listing from "../models/listings/listing/listing.model.js";
+import Price from "../models/listings/listing/price.model.js";
 import User from "../models/user.model.js";
 
-export const getProperties = async (req, res) => {
+export const getListings = async (req, res) => {
   const {
     name,
     nameOptions,
@@ -97,28 +97,24 @@ export const getProperties = async (req, res) => {
   if (Object.keys(numQuery).length !== 0) {
     queryObject.numQuery = numQuery;
   }
-  const queryProperties = await buildQuery(
-    Listing,
-    queryObject,
-    structureQuery
-  );
+  const Listings = await buildQuery(Listing, queryObject, structureQuery);
 
   const getPriceInfo = async () => {
-    const Properties = [];
+    const Listings = [];
 
-    for (const Listing in queryProperties) {
+    for (const Listing in Listings) {
       const priceInfo = await Price.findOne({ Listing_id: Listing._id });
-      Properties.push({
+      Listings.push({
         ...Listing,
         ...priceInfo,
       });
     }
-    return Properties;
+    return Listings;
   };
 
-  const properties = await getPriceInfo();
+  const listings = await getPriceInfo();
 
-  res.status(StatusCodes.OK).json({ properties });
+  res.status(StatusCodes.OK).json({ listings });
 };
 
 export const getListing = async (req, res) => {
@@ -167,10 +163,7 @@ export const postListing = async (req, res) => {
   }
 
   const Listing = await Listing.create(fields);
-  User.updateOne(
-    { _id: fields.user_id },
-    { $push: { properties: Listing._id } }
-  );
+  User.updateOne({ _id: fields.user_id }, { $push: { listings: Listing._id } });
   res.status(StatusCodes.OK).json({ response: Listing });
 };
 export const deleteListing = async (req, res) => {
@@ -194,7 +187,7 @@ export const postReview = async (req, res) => {
     "createdAt",
     "comments",
     "entityId",
-    "entityType",
+    "subcategory",
     "isHostHighlight",
     "listing",
   ];

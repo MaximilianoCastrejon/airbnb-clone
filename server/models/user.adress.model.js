@@ -1,8 +1,5 @@
 import mongoose from "mongoose";
 
-/*
- * @params Accomodation id refers to the physical layout of the host's property
- */
 const AddressSchema = new mongoose.Schema(
   {
     street_name: {
@@ -17,7 +14,7 @@ const AddressSchema = new mongoose.Schema(
     user_id: {
       type: mongoose.Schema.Types.ObjectId,
       require: true,
-      ref: "Property",
+      ref: "User",
     },
     postal_code: {
       type: Number,

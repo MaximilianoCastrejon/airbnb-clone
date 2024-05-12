@@ -17,7 +17,7 @@ export interface User {
   username: string;
   email: string;
   profile_image: File | string;
-  properties: [String];
+  listings: [String];
   // Other user-related fields
 }
 

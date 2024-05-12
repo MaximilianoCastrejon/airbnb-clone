@@ -95,7 +95,7 @@ function AuthDropdown({ toggleDropdown, drowpdownRender }: AuthDropdownProps) {
           </ul>
           <div className="py-2">
             <ul className="py-2 text-sm text-gray-700 dark:text-gray-200">
-              {userContext && userContext.properties.length > 0 ? (
+              {userContext && userContext.listings.length > 0 ? (
                 <li>
                   <a
                     href="#"

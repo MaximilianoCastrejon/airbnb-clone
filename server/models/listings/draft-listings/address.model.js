@@ -5,6 +5,18 @@ import mongoose from "mongoose";
  */
 const AddressSchema = new mongoose.Schema(
   {
+    country: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Country",
+    },
+    state: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "State",
+    },
+    city: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "City",
+    },
     street_name: {
       type: String,
       unique: true,
@@ -15,9 +27,9 @@ const AddressSchema = new mongoose.Schema(
     accomodation_local_id: {
       type: String,
     },
-    property_id: {
+    listing_id: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Property",
+      ref: "Listing",
     },
     postal_code: {
       type: Number,
@@ -38,10 +50,6 @@ const AddressSchema = new mongoose.Schema(
         },
         message: "Decription must have a maximum of 255 digits.",
       },
-    },
-    country: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Country",
     },
     active: {
       type: Boolean,

@@ -1,14 +1,14 @@
 import mongoose from "mongoose";
 
-const PropertyImageSchema = new mongoose.Schema(
+const ListingPhotoSchema = new mongoose.Schema(
   {
     image_url: {
       type: String,
       require: true,
     },
-    property_id: {
+    listing_id: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Property",
+      ref: "Listing",
       require: true,
     },
     added_by_user: {
@@ -25,11 +25,11 @@ const PropertyImageSchema = new mongoose.Schema(
 );
 
 /**
- * At least 5 images must be chosen by business requirements
+ * At least 5 Photos must be chosen by business requirements
  */
-PropertyImageSchema.pre("save", function (next) {
+ListingPhotoSchema.pre("save", function (next) {
   this.constructor.countDocuments(
-    { property_id: this.property_id },
+    { listing_id: this.listing_id },
     (err, count) => {
       if (err) {
         return next(err);
@@ -37,7 +37,7 @@ PropertyImageSchema.pre("save", function (next) {
 
       if (count < 5) {
         const error = new Error(
-          "There must be at least 5 images with the same propertyId."
+          "There must be at least 5 Photos with the same listingId."
         );
         return next(error);
       }
@@ -47,17 +47,17 @@ PropertyImageSchema.pre("save", function (next) {
   );
 });
 
-PropertyImageSchema.pre("updateOne", function (next) {
-  const property_id = this._update.$set.property_id;
+ListingPhotoSchema.pre("updateOne", function (next) {
+  const listing_id = this._update.$set.listing_id;
 
-  this.model.countDocuments({ property_id }, (err, count) => {
+  this.model.countDocuments({ listing_id }, (err, count) => {
     if (err) {
       return next(err);
     }
 
     if (count < 5) {
       const error = new Error(
-        "There must be at least 5 images with the same propertyId."
+        "There must be at least 5 Photos with the same listingId."
       );
       return next(error);
     }
@@ -66,5 +66,5 @@ PropertyImageSchema.pre("updateOne", function (next) {
   });
 });
 
-const PropertyImage = mongoose.model("PropertyImage", PropertyImageSchema);
-export default PropertyImage;
+const ListingPhoto = mongoose.model("ListingPhoto", ListingPhotoSchema);
+export default ListingPhoto;

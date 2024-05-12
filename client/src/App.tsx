@@ -12,7 +12,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<page.HomePage />} />
-            <Route path="/:id" element={<page.Property />} />
+            <Route path="/:id" element={<page.Listing />} />
           </Route>
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<UserHeader />}>

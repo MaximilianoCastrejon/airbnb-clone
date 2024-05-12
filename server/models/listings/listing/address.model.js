@@ -17,10 +17,10 @@ const AddressSchema = new mongoose.Schema(
     accomodation_local_id: {
       type: String,
     },
-    property_id: {
+    listing_id: {
       type: mongoose.Schema.Types.ObjectId,
       require: true,
-      ref: "Property",
+      ref: "Listing",
     },
     postal_code: {
       type: Number,

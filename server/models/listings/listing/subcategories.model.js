@@ -67,6 +67,14 @@ const SubCategorySchema = new mongoose.Schema(
       type: String,
       require: true,
     },
+    icon_svg: {
+      type: String,
+      require: true,
+    },
+    icon_image_url: {
+      type: String,
+      require: true,
+    },
     active: {
       type: Boolean,
       default: true,

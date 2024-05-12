@@ -4,7 +4,7 @@ import Settings from './Settings.tsx';
 import Inbox from './Inbox.tsx';
 import NotFound from './NotFound.tsx';
 import HomePage from './HomePage.tsx';
-import Property from './Property.tsx';
+import Listing from './Listing.tsx';
 import AirbnbForWork from './AirbnbForWork.tsx';
 import ProfHosting from './ProfHosting.tsx';
 import Invite from './Invite.tsx';
@@ -26,7 +26,7 @@ import Taxpayers from './Account/Taxpayers.tsx';
 import BecomeAHost from './BecomeAHost.tsx';
 export {
   Profile,
-  Property,
+  Listing,
   Trips,
   Settings,
   Inbox,

@@ -14,7 +14,7 @@ import { randomImageName } from "../libs/createID.js";
 import sharp from "sharp";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { TOKEN_SECRET } from "../config.js";
-import Listing from "../models/properties/listings/listing.model.js";
+import Listing from "../models/listings/listing/listing.model.js";
 
 export const user = async (req, res) => {
   const { email } = req.query;
@@ -65,7 +65,7 @@ export const login = async (req, res) => {
     username: userFound.username,
     email: userFound.email,
     profile_image: userFound.profile_image,
-    properties: userFound.properties,
+    listings: userFound.listings,
   });
 };
 
@@ -126,7 +126,7 @@ export const signup = async (req, res) => {
 
 export const deleteUser = async (req, res, next) => {
   User.findById(req.params.user_id, function (err, user) {
-    Property.deleteMany({ _id: { $in: user.properties } }, function (err) {
+    Listing.deleteMany({ _id: { $in: user.listings } }, function (err) {
       if (err) return next(err);
       user.remove();
       res.status(StatusCodes.OK).send("user deleted succesfuly");
@@ -148,7 +148,7 @@ export const verifyToken = async (req, res) => {
       username: userFound.username,
       email: userFound.email,
       profile_image: userFound.profile_image,
-      properties: userFound.properties,
+      listings: userFound.listings,
     });
   });
 };

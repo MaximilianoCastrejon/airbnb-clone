@@ -2,9 +2,9 @@ import mongoose from "mongoose";
 
 const BookingSchema = new mongoose.Schema(
   {
-    property_id: {
+    listing_id: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Property",
+      ref: "Lsiting",
       required: true,
     },
     user_id: {
