@@ -5,21 +5,22 @@ import YourHome from './modals/YourHome';
 import SignUp from './modals/SignUp';
 
 interface UnauthDropdownProps {
-  toggleDropdown: () => void; // Ensure correct typing for toggleDropdown prop
-  drowpdownRender: boolean;
+  authMenuRef: React.RefObject<HTMLDivElement>; // Ensure correct typing for authMenuRef prop
+  isMenuCollapsed: boolean;
+  setIsMenuCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 function UnauthDropdown({
-  toggleDropdown,
-  drowpdownRender
+  authMenuRef,
+  isMenuCollapsed,
+  setIsMenuCollapsed
 }: UnauthDropdownProps) {
-  /* ** CHECK ** */
   const modalRef = useRef<HTMLDivElement | null>(null);
   const [renderedModal, setRenderedModal] = useState(String);
-  const dropdown = useRef<HTMLDivElement | null>(null);
 
   const [isModalActive, setIsModalActive] = useState(false);
 
+  // TODO: write a better toggle
   const toggleModal = (
     e: React.MouseEvent<HTMLAnchorElement | HTMLDivElement | HTMLButtonElement>
   ) => {
@@ -39,7 +40,7 @@ function UnauthDropdown({
       // if not -> Render
       setRenderedModal(modalId);
       setIsModalActive(true);
-      toggleDropdown();
+      setIsMenuCollapsed((prev) => !prev);
     }
   };
 
@@ -47,57 +48,47 @@ function UnauthDropdown({
   return (
     <>
       {/* <!-- Dropdown menu --> */}
-      {drowpdownRender && (
+      {isMenuCollapsed && (
         <div
           id="dropdownDivider"
-          ref={dropdown}
+          ref={authMenuRef}
           aria-labelledby="dropdownDividerButton"
-          className="z-10 bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700 dark:divide-gray-600"
+          className="z-10 bg-white menu-shadow rounded-lg py-2 text-sm shadow w-44 "
         >
-          <ul
-            className="py-2 text-sm text-gray-700 dark:text-gray-200"
-            aria-labelledby="dropdownDividerButton"
-          >
-            <li>
-              <a
-                onClick={(e) => toggleModal(e)}
-                id="signup"
-                className="block cursor-pointer font-semibold px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
-              >
-                Sing up
-              </a>
-            </li>
-            <li>
-              <a
-                onClick={(e) => toggleModal(e)}
-                id="login"
-                className="block  cursor-pointer px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
-              >
-                Login
-              </a>
-            </li>
-          </ul>
           <div className="py-2">
-            <ul>
-              <li>
-                <a
-                  onClick={(e) => toggleModal(e)}
-                  id="home"
-                  className="block cursor-pointer px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
-                >
-                  Airbnb your home
-                </a>
-              </li>
-              <li>
-                <a
-                  onClick={(e) => toggleModal(e)}
-                  id="help"
-                  className="block cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white"
-                >
-                  Help Center
-                </a>
-              </li>
-            </ul>
+            <button
+              onClick={(e) => toggleModal(e)}
+              id="signup"
+              className="block w-full text-left font-semibold px-4 py-2 hover:bg-zinc-100 "
+            >
+              Sing up
+            </button>
+            <button
+              onClick={(e) => toggleModal(e)}
+              id="login"
+              className="block w-full text-left px-4 py-2 hover:bg-zinc-100 "
+            >
+              Login
+            </button>
+          </div>
+          <div className="border-b border-gray-200 my-1 w-full"></div>
+
+          <div className="py-2">
+            <button
+              onClick={(e) => toggleModal(e)}
+              id="home"
+              className="block w-full text-left px-4 py-2 hover:bg-zinc-100 "
+            >
+              Airbnb your home
+            </button>
+
+            <button
+              onClick={(e) => toggleModal(e)}
+              id="help"
+              className="block w-full text-left px-4 py-2 text-sm hover:bg-zinc-100"
+            >
+              Help Center
+            </button>
           </div>
         </div>
       )}
