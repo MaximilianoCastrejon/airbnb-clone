@@ -15,6 +15,7 @@ import sharp from "sharp";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { TOKEN_SECRET } from "../config.js";
 import Listing from "../models/listings/listing/listing.model.js";
+import { createReferralCode } from "../libs/createReferalCode.js";
 
 export const user = async (req, res) => {
   const { email } = req.query;
@@ -58,8 +59,9 @@ export const login = async (req, res) => {
     throw new async_errors.AuthenticationError("Verify email and password");
   }
   const token = await createAccessToken({ id: userFound._id });
+  const listings = await Listing.find({ host_id: userFound._id });
+  userFound.listings = listings || []; // Ensure it's an array
   res.cookie("token", token);
-
   return res.status(StatusCodes.OK).json({
     id: userFound._id,
     username: userFound.username,
@@ -95,6 +97,7 @@ export const signup = async (req, res) => {
 
   await s3.send(command);
 
+  const referralCode = createReferralCode(username);
   const user = {
     username,
     email,
@@ -110,6 +113,7 @@ export const signup = async (req, res) => {
       }
     ),
     profile_image: imageName,
+    referal_code: referralCode,
   };
   const newUser = await User.create(user);
   if (!newUser)
@@ -151,4 +155,25 @@ export const verifyToken = async (req, res) => {
       listings: userFound.listings,
     });
   });
+};
+
+export const updateUser = async (req, res) => {
+  const paths = Object.keys(User.schema.paths);
+  const update = {};
+  for (const key in req.body) {
+    if (key in paths) {
+      update[key] = req.body[key];
+    } else {
+      console.log(`property ${key} is not an valid path for this schema`);
+    }
+  }
+  const updatedUser = await User.findOneAndUpdate(
+    { _id: req.params.user_id },
+    { update },
+    { new: true }
+  );
+  if (!updatedUser) {
+    throw new Error("Update failed");
+  }
+  res.status(StatusCodes.OK).json({ updatedUser });
 };

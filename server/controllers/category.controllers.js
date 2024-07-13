@@ -1,10 +1,46 @@
 import * as async_errors from "../errors/errors.barrel.js";
 import { StatusCodes } from "http-status-codes";
+import { createDocument } from "../libs/createDocument.js";
+import Category from "../models/listings/category.model.js";
+import { buildQuery } from "../libs/buildQuery.js";
 
-const postCategory = async (req, res) => {
-  const { name, description } = req.body;
+export const getCategories = async (req, res) => {
+  const {
+    query,
+    numericFilters,
+    projection,
+    sort,
+    page,
+    offset,
+    populate,
+    count,
+  } = req.query;
+  // query = '{"result":true, "count":42}'
+  const structureQuery = {
+    ...(projection && { projection }),
+    ...(page && offset && { pagination: { page, limit: offset } }),
+    ...(sort && { sort }),
+    ...(populate && { populate }),
+  };
+
+  const result = buildQuery(Category, {
+    query: query,
+    numericFilters: numericFilters,
+    structure: structureQuery,
+    count: count
+  });
+  if(!result){
+    throw
+  }
+  res.status(StatusCodes.OK).json(result);
 };
-const updateCategory = async (req, res) => {
+export const postCategory = async (req, res) => {
+  const fields = req.body;
+
+  const result = await createDocument(Category, fields);
+  res.status(StatusCodes.OK).json({ result });
+};
+export const updateCategory = async (req, res) => {
   const { id } = req.params;
   const { name, description } = req.body;
 };

@@ -1,4 +1,3 @@
-import * as async_errors from "../errors/errors.barrel.js";
 import { StatusCodes } from "http-status-codes";
 import bcrypt from "bcryptjs";
 import { s3, s3Name } from "../db/s3.client.js";
@@ -11,187 +10,124 @@ import { randomImageName } from "../libs/createID.js";
 import sharp from "sharp";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import Listing from "../models/listings/listing/listing.model.js";
-import Price from "../models/listings/listing/price.model.js";
+import Review from "../models/listings/listing/review.model.js";
 import User from "../models/user.model.js";
+import { buildQuery } from "../libs/buildQuery.js";
+import { createDocument } from "../libs/createDocument.js";
+import DiscountCode from "../models/discount.code.model.js";
+import Category from "../models/listings/category.model.js";
+import checkDiscountValidity from "../libs/validateDiscount.js";
 
 export const getListings = async (req, res) => {
   const {
-    name,
-    nameOptions,
-    description,
-    descriptionOptions,
-    category,
-    subcategory,
-    country,
-    state,
-    city,
-    user_id,
-    address,
-    latitude,
-    longitude,
-    bedroom_count,
-    bed_count,
-    pna_bathroom_count,
-    dedicated_bathroom_count,
-    shared_bathroom_count,
-    accomodates_count,
-    availability_type,
-    start_date,
-    refund_type,
-    checkInTime,
-    checkOutTime,
+    query,
     numericFilters,
     projection,
     sort,
     page,
     offset,
+    populate,
+    count,
   } = req.query;
 
-  const queryObject = {};
-  const numQuery = {};
-  const idFields = [];
-  const structureQuery = {};
-  /* Query params */
-
-  const stringParams = [];
-  const fields = [
-    { name: "name", value: name, options: nameOptions },
-    { name: "description", value: description, options: descriptionOptions },
-  ];
-
-  for (const field of fields) {
-    if (field.value) {
-      stringParams.push({
-        [field.name]: field.value,
-        [`${field.name}Options`]: field.options,
-      });
-    }
-  }
-  if (user_id) {
-    idFields.push({ id: user_id, fieldName: "user_id" });
-  }
-  /* Structure */
-  if (projection) {
-    structureQuery.projection = projection;
-  }
-  if (page && offset) {
-    structureQuery.pagination = { page: page, limit: offset };
-  }
-  if (sort) {
-    structureQuery.sort = sort;
-  }
-
-  /* String and num objects to build query*/
-
-  if (stringParams.length > 0) {
-    queryObject.stringParams = stringParams;
-  }
-
-  if (numericFilters) {
-    numQuery.numericFilters = numericFilters;
-    numQuery.options = [];
-  }
-  if (idFields.length !== 0) {
-    queryObject.idFields = idFields;
-  }
-  if (Object.keys(numQuery).length !== 0) {
-    queryObject.numQuery = numQuery;
-  }
-  const Listings = await buildQuery(Listing, queryObject, structureQuery);
-
-  const getPriceInfo = async () => {
-    const Listings = [];
-
-    for (const Listing in Listings) {
-      const priceInfo = await Price.findOne({ Listing_id: Listing._id });
-      Listings.push({
-        ...Listing,
-        ...priceInfo,
-      });
-    }
-    return Listings;
+  const structureQuery = {
+    ...(projection && { projection }),
+    ...(page && offset && { pagination: { page, limit: offset } }),
+    ...(sort && { sort }),
+    ...(populate && { populate }),
   };
 
-  const listings = await getPriceInfo();
+  const quieriedListings = await buildQuery(Listing, {
+    query: query,
+    numericFilters: numericFilters,
+    structure: structureQuery,
+    count: count,
+  });
 
-  res.status(StatusCodes.OK).json({ listings });
+  // const getPriceInfo = async () => {
+  //   const Listings = [];
+
+  //   for (const Listing in quieriedListings) {
+  //     query.listing_id = Listing._id;
+  //     const priceInfo = await buildQuery(
+  //       Price,
+  //       query,
+  //       numericFilters,
+  //       structureQuery
+  //     );
+  //     Listings.push({
+  //       ...Listing,
+  //       ...priceInfo,
+  //     });
+  //   }
+  //   return Listings;
+  // };
+
+  // const listings = await getPriceInfo();
+
+  res.status(StatusCodes.OK).json({ quieriedListings });
 };
 
 export const getListing = async (req, res) => {
   const { id } = req.params;
-  const Listing = await Listing.findById(id);
-  res.status(StatusCodes.OK).json({ Listing });
+  const resultListing = await Listing.findById(id);
+  res.status(StatusCodes.OK).json({ resultListing });
 };
 
 export const postListing = async (req, res) => {
-  const required_fields = [
-    "name",
-    "description",
-    "category",
-    "subcategory",
-    "country",
-    "state",
-    "city",
-    "user_id",
-    "address",
-    "latitude",
-    "longitude",
-    "bedroom_count",
-    "bed_count",
-    "pna_bathroom_count",
-    "dedicated_bathroom_count",
-    "shared_bathroom_count",
-    "accomodates_count",
-    "availability_type",
-    "start_date",
-    "refund_type",
-    "checkInTime",
-    "checkOutTime",
-  ];
-
   const fields = req.body;
 
-  const missingFields = required_fields.filter(
-    (field) => !fields.hasOwnListing(field)
-  );
-
-  if (missingFields.length > 0) {
-    // Respond with an error indicating the missing fields
-    throw new async_errors.BadRequestError(
-      "You must have completed all of the required fields before finishing your listing"
-    );
-  }
-
-  const Listing = await Listing.create(fields);
-  User.updateOne({ _id: fields.user_id }, { $push: { listings: Listing._id } });
-  res.status(StatusCodes.OK).json({ response: Listing });
+  const result = await createDocument(Listing, fields);
+  res.status(StatusCodes.OK).json({ result });
 };
+
 export const deleteListing = async (req, res) => {
   const user = req.user;
   Listing;
   // Verify token to assure
   res.status(StatusCodes.OK).json({});
 };
+
 export const updateListing = async (req, res) => {
   res.status(StatusCodes.OK).json({});
 };
 
 export const getReviews = async (req, res) => {
-  res.status(StatusCodes.OK).json({});
+  const {
+    query,
+    numericFilters,
+    projection,
+    sort,
+    page,
+    offset,
+    populate,
+    count,
+  } = req.query;
+
+  const structureQuery = {
+    ...(projection && { projection }),
+    ...(page && offset && { pagination: { page, limit: offset } }),
+    ...(sort && { sort }),
+    ...(populate && { populate }),
+  };
+
+  const result = await buildQuery(Review, {
+    query: query,
+    numericFilters: numericFilters,
+    structure: structureQuery,
+    count: count,
+  });
+
+  res.status(StatusCodes.OK).json(result);
 };
 export const getReview = async (req, res) => {
   res.status(StatusCodes.OK).json({});
 };
 export const postReview = async (req, res) => {
-  const required_fields = [
-    "createdAt",
-    "comments",
-    "entityId",
-    "subcategory",
-    "isHostHighlight",
-    "listing",
-  ];
-  res.status(StatusCodes.OK).json({});
+  const fields = req.body;
+  const result = await createDocument(Review, fields);
+
+  res.status(StatusCodes.OK).json(result);
 };
 export const updateReview = async (req, res) => {
   res.status(StatusCodes.OK).json({});
@@ -249,3 +185,61 @@ export const deleteReview = async (req, res) => {
     }
 }
 */
+
+export const getCategory = async (req, res) => {
+  res.status(StatusCodes.OK).json({});
+};
+export const queryCategories = async (req, res) => {
+  const {
+    query,
+    numericFilters,
+    projection,
+    sort,
+    page,
+    offset,
+    populate,
+    count,
+  } = req.query;
+
+  const structureQuery = {
+    ...(projection && { projection }),
+    ...(page && offset && { pagination: { page, limit: offset } }),
+    ...(sort && { sort }),
+    ...(populate && { populate }),
+  };
+
+  const result = await buildQuery(Category, {
+    query: query,
+    numericFilters: numericFilters,
+    structure: structureQuery,
+    count: count,
+  });
+  res.status(StatusCodes.OK).json(result);
+};
+export const createCategory = async (req, res) => {
+  const fields = req.body;
+  const result = await createDocument(Category, fields);
+
+  res.status(StatusCodes.OK).json(result);
+};
+export const updateCategory = async (req, res) => {
+  const { id } = req.params;
+  const updates = req.body;
+  const updatedCategory = await Category.findByIdAndUpdate(id, updates, {
+    new: true, // Return the updated document
+    runValidators: true, // Validate updates against the model schema
+  });
+
+  if (!updatedCategory) {
+    return res
+      .status(StatusCodes.NOT_FOUND)
+      .send({ message: "Category not found" });
+  }
+  res.status(StatusCodes.OK).json(updatedCategory);
+};
+export const deleteCategory = async (req, res) => {
+  const { id } = req.params;
+  console.log(id);
+  await Category.findByIdAndDelete(id);
+  res.status(StatusCodes.OK).json({ message: "Deleted successfuly" });
+};
