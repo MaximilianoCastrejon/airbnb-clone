@@ -38,30 +38,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         if (res.status === 200) {
           setUserContext(res.data);
           setIsAuthenticated(true);
-          // return getListings(res.data.id);
         }
       })
-      // .then((listingsRes) => {
-      //   const listingsFound = () => {
-      //     return (
-      //       userContext &&
-      //       listingsRes &&
-      //       listingsRes.status === 200 &&
-      //       listingsRes.data.listings.length !== 0
-      //     );
-      //   };
-
-      //   if (listingsFound()) {
-      //     console.log('HOLAAAAA');
-      //     setUserContext((prev) => {
-      //       if (prev) return { ...prev, listings: true };
-      //       return prev;
-      //     });
-      //   }
-      //   if (listingsRes?.status === 200) {
-      //     setUserContext((userContext) => userContext);
-      //   }
-      // })
       .catch((error) => {
         setErrors(error.response.data);
       });
@@ -73,11 +51,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     const form_data = new FormData();
 
-    if (credentials.email && credentials.password && credentials.username) {
+    if (
+      credentials.email &&
+      credentials.password &&
+      credentials.username &&
+      credentials.profile_image
+    ) {
       form_data.append('email', credentials.email);
       form_data.append('password', credentials.password);
       form_data.append('username', credentials.username);
-      form_data.append('image', credentials.profile_image);
+      form_data.append('profile_image', credentials.profile_image);
     } else {
       return alert('Please fill out every field');
     }
