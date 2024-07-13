@@ -2,9 +2,23 @@ import mongoose from "mongoose";
 
 const UserSchema = new mongoose.Schema(
   {
+    refered_by: {
+      type: mongoose.Schema.Types.ObjectId,
+      require: false,
+      ref: "User",
+    },
     username: {
       type: String,
       require: true,
+    },
+    middle_name: {
+      type: String,
+    },
+    first_last_name: {
+      type: String,
+    },
+    second_last_name: {
+      type: String,
     },
     email: {
       type: String,
@@ -22,13 +36,13 @@ const UserSchema = new mongoose.Schema(
     isSuperHost: {
       type: Boolean,
     },
-    // Update USER whenever user click to create a new listing to grant access to host panel
-    // is_host: {
-    //   type: Boolean,
-    //   default: false,
-    // },
-    listings: {
-      type: [String],
+    referal_code: {
+      type: String,
+    },
+    address: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Address",
+      // require: true,
     },
   },
   { timestamps: true }
