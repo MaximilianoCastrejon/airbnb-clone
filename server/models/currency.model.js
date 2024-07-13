@@ -9,18 +9,24 @@ const CurrencyStatus = {
   PENDING_ACTIVATION: 6,
 };
 
-const CurrencySchema = new mongoose.Schema(
-  {
-    name: { type: String, require: true },
-    icon_path: { type: String, require: true },
-    status: {
-      type: Number,
-      enum: Object.values(CurrencyStatus),
-      default: CurrencyStatus.ACTIVE,
+const CurrencySchema = new mongoose.Schema({
+  name: { type: String, require: true },
+  iso_code: {
+    type: String,
+    validate: {
+      validator: function (value) {
+        return value.length === 3;
+      },
+      message: "ISO code is expected to have three digits",
     },
   },
-  { timestamps }
-);
+  icon: { type: String, require: true },
+  status: {
+    type: Number,
+    enum: Object.values(CurrencyStatus),
+    default: CurrencyStatus.ACTIVE,
+  },
+});
 
 const Currency = mongoose.model("Currency", CurrencySchema);
 export default Currency;
