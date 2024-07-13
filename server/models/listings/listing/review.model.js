@@ -36,13 +36,73 @@ const ReviewSchema = new mongoose.Schema(
     comment: {
       type: String,
     },
+    cleanliness_score: {
+      type: Number,
+      require: true,
+      validate: {
+        validator: function (value) {
+          return value >= 5 || value <= 0;
+        },
+        message: "Value cannot fall outside of the 0-5 range",
+      },
+    },
+    accuracy_score: {
+      type: Number,
+      require: true,
+      validate: {
+        validator: function (value) {
+          return value >= 5 || value <= 0;
+        },
+        message: "Value cannot fall outside of the 0-5 range",
+      },
+    },
+    checkIn_score: {
+      type: Number,
+      require: true,
+      validate: {
+        validator: function (value) {
+          return value >= 5 || value <= 0;
+        },
+        message: "Value cannot fall outside of the 0-5 range",
+      },
+    },
+    communication_score: {
+      type: Number,
+      require: true,
+      validate: {
+        validator: function (value) {
+          return value >= 5 || value <= 0;
+        },
+        message: "Value cannot fall outside of the 0-5 range",
+      },
+    },
+    location_score: {
+      type: Number,
+      require: true,
+      validate: {
+        validator: function (value) {
+          return value >= 5 || value <= 0;
+        },
+        message: "Value cannot fall outside of the 0-5 range",
+      },
+    },
+    value_score: {
+      type: Number,
+      require: true,
+      validate: {
+        validator: function (value) {
+          return value >= 5 || value <= 0;
+        },
+        message: "Value cannot fall outside of the 0-5 range",
+      },
+    },
     rating: {
       type: Number,
       validate: {
         validator: function (value) {
-          return value >= 10 || value <= 0;
+          return value >= 5 || value <= 0;
         },
-        message: "Rating cannot fall outside of the 0-10 range",
+        message: "Rating cannot fall outside of the 0-5 range",
       },
     },
     photos: {

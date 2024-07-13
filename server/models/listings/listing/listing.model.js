@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import Category from "../category.model.js";
+import { Db } from "mongodb";
 
 // Custom validator function for latitude
 const validateLatitude = (value) => {
@@ -10,15 +12,27 @@ const validateLongitude = (value) => {
   return value >= -180 && value <= 180;
 };
 
+// Depending on the category, some fields do not apply
 const ListingSchema = new mongoose.Schema(
   {
-    name: {
+    title: {
       type: String,
+      require: true,
+      validate: {
+        validator: function (value) {
+          return value.length > 32;
+        },
+        message: "Tittle mmust have less than 32 characters",
+      },
+      unique: true,
+    },
+    host_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
       require: true,
     },
     description: {
       type: String,
-      unique: true,
       require: true,
     },
     category: {
@@ -31,29 +45,31 @@ const ListingSchema = new mongoose.Schema(
       ref: "SubCategory",
       require: true,
     },
-    country: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Country",
-      require: true,
-    },
-    state: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "State",
-      require: true,
-    },
-    city: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "City",
-      require: true,
-    },
-    user_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      require: true,
-    },
     address: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Address",
       require: true,
+      unique: true,
+    },
+    price_per_night: {
+      type: Number,
+      require: true,
+    },
+    price_currency: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Currency",
+    },
+    cleaning_fees: {
+      type: Number,
+      require: false,
+    },
+    cleaning_fees_percentage: {
+      type: Number,
+      require: false,
+    },
+    show_exact_location: {
+      type: Boolean,
+      default: false,
     },
     latitude: {
       type: String,
@@ -69,62 +85,98 @@ const ListingSchema = new mongoose.Schema(
         validator: validateLongitude,
         message: "Invalid latitude. Must be between -180 and 180 degrees.",
       },
-
       require: true,
     },
+
+    // Entire place & Private rooms
     bedroom_count: {
       type: Number,
       require: true,
     },
+    // Entire place & Shared rooms & Private rooms
     bed_count: {
       type: Number,
       require: true,
+      default: 1,
     },
-    pna_bathroom_count: {
+    // Entire place & Shared rooms
+    bathrooms: {
       type: Number,
-      require: true,
+      default: 0,
+    },
+    // Private rooms
+    lockOnEveryBedroom: {
+      type: Boolean,
+    },
+    private_bathroom_count: {
+      type: Number,
       default: 0,
     },
     dedicated_bathroom_count: {
       type: Number,
-      require: true,
       default: 0,
     },
     shared_bathroom_count: {
       type: Number,
-      require: true,
       default: 0,
     },
+    encounter_type: {
+      type: String,
+      enum: ["host", "family", "other_guests", "roommates"],
+      default: "host",
+    },
+    /******************************** */
     accomodates_count: {
       type: String,
       require: true,
     },
     availability_type: {
-      type: Number,
-      enum: {
-        AVAILABLE: 0,
-        BOOKED: 1,
-        BLOCKED: 2,
-        UNDER_MAINTENANCE: 3,
+      type: String,
+      enum: ["AVAILABLE", "BLOCKED", "UNDER_MAINTENANCE"],
+      set: (value) => value.toUpperCase(),
+      validate: {
+        validator: function (value) {
+          const enumValues = ["AVAILABLE", "BLOCKED", "UNDER_MAINTENANCE"];
+          return enumValues.includes(value);
+        },
+        message: (props) =>
+          `${props.value} is not a valid enum value for the availability type`,
       },
+      default: "AVAILABLE",
       required: true,
     },
-    start_date: {
+    booking_acceptance_type: {
+      type: String,
+      enum: ["immeadiate", "under_approval"],
+      require: true,
+    },
+    start_date_UTC: {
       type: Date,
       default: Date.now(),
       require: true,
     },
-    end_date: {
+    end_date_UTC: {
       type: Date,
+    },
+    unavailable_period_UTC: {
+      from: { type: Date },
+      to: {
+        type: Date,
+        validate: {
+          validator: function (value) {
+            return this.from < value;
+          },
+          message: "To date must be after the From date",
+        },
+      },
     },
     minimum_stay_duration: {
       type: Number,
       default: 1,
     },
-    minimum_stay_timeframe: {
-      type: String,
-      enum: ["day", "week", "month", "year", "night"],
-      default: "day",
+    maximum_stay_duration: {
+      type: Number,
+      default: 365,
     },
     refund_type: {
       type: String,
@@ -139,17 +191,90 @@ const ListingSchema = new mongoose.Schema(
         GRACE_PERIOD: "grace_period",
       },
     },
-    checkInTime: {
+    checkin_time: {
       type: String, // You can use a specific type (e.g., Date) based on your needs
-      required: true,
+      // required: true,
     },
-    checkOutTime: {
+    checkout_time: {
       type: String, // You can use a specific type (e.g., Date) based on your needs
-      required: true,
+      // required: true,
+    },
+    accepted_guest_type: {
+      type: String,
+      enum: ["Any", "Experienced"],
+      default: "Any",
+    },
+    security_cameras: {
+      type: Boolean,
+      default: false,
+    },
+    weapons_around: {
+      type: Boolean,
+      default: false,
+    },
+    dangerous_animals_around: {
+      type: Boolean,
+      default: false,
+    },
+    applicable_discounts: {
+      type: [mongoose.Schema.Types.ObjectId], // Discounts aplied by host (first reservation, week-long stay)
+      ref: "DiscountCode",
+    },
+    checkin_method: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "CheckInMethod",
+    },
+    wifi_network_name: {
+      type: String,
+    },
+    wifi_password: {
+      type: String,
+    },
+    house_manual: {
+      type: String,
     },
   },
   { timestamps: true }
 );
+
+ListingSchema.pre(
+  ["find", "findOne", "findOneAndUpdate"],
+  async function (next) {
+    const docCount = await Listing.countDocuments({}, { hint: "_id_" });
+    if (docCount === 0) return next();
+    const category = await Category.findById(this.category);
+    switch (category.name) {
+      case "shared_room":
+        this.select("-bedroom_count -bathrooms");
+        break;
+      case "entire_place":
+        this.select(
+          "-lockOnEveryBedroom -private_bathroom_count -dedicated_bathroom_count -shared_bathroom_count -encounterType"
+        );
+        break;
+      case "private_room":
+        this.select("-bathrooms");
+        break;
+    }
+    next();
+  }
+);
+
+const toUTCStringMiddleware = (next) => {
+  const dateFields = Object.keys(this.schema.paths).filter(
+    (path) => this[path] instanceof Date
+  );
+
+  dateFields.forEach((field) => {
+    if (this[field]) {
+      this[field] = this[field].toUTCString();
+    }
+  });
+
+  next();
+};
+
+ListingSchema.pre("save", toUTCStringMiddleware);
 
 const Listing = mongoose.model("Listing", ListingSchema);
 export default Listing;
