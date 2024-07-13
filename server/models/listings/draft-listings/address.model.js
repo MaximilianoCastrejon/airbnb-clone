@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 /*
  * @params Accomodation id refers to the physical layout of the host's property
  */
-const AddressSchema = new mongoose.Schema(
+const DraftAddressSchema = new mongoose.Schema(
   {
     country: {
       type: mongoose.Schema.Types.ObjectId,
@@ -61,5 +61,5 @@ const AddressSchema = new mongoose.Schema(
   }
 );
 
-const Address = mongoose.model("Address", AddressSchema);
-export default Address;
+const DraftAddress = mongoose.model("DraftAddress", DraftAddressSchema);
+export default DraftAddress;

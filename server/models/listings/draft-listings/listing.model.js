@@ -11,16 +11,34 @@ const validateLongitude = (value) => {
 };
 
 /**
- * Form to let user retireve their progress on their accomodation posting process
+ * Host id will always be store in cohosts as well as in published_by
  */
 const DraftListingSchema = new mongoose.Schema(
   {
-    name: {
+    tittle: {
       type: String,
+      validate: {
+        validator: function (value) {
+          return value.length > 32;
+        },
+        message: "Tittle mmust have less than 32 characters",
+      },
+      unique: true,
     },
+    published_by: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      require: true,
+    },
+    cohosts: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        require: true,
+      },
+    ],
     description: {
       type: String,
-      unique: true,
     },
     category: {
       type: mongoose.Schema.Types.ObjectId,
@@ -30,14 +48,21 @@ const DraftListingSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "SubCategory",
     },
-
-    user_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
     address: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "DraftAddress",
+      ref: "Address",
+      unique: true,
+    },
+    price_per_night: {
+      type: Number,
+    },
+    price_currency: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Currency",
+    },
+    show_exact_location: {
+      type: Boolean,
+      default: false,
     },
     latitude: {
       type: String,
@@ -53,15 +78,42 @@ const DraftListingSchema = new mongoose.Schema(
         message: "Invalid latitude. Must be between -180 and 180 degrees.",
       },
     },
+
+    // Entire place & Private rooms
     bedroom_count: {
       type: Number,
     },
     bed_count: {
       type: Number,
+      default: 1,
     },
-    bathroom_count: {
+    // Shared rooms & Entire place
+    bathrooms: {
       type: Number,
+      default: 0,
     },
+    // Private rooms
+    lockOnEveryBedroom: {
+      type: Boolean,
+    },
+    private_bathroom_count: {
+      type: Number,
+      default: 0,
+    },
+    dedicated_bathroom_count: {
+      type: Number,
+      default: 0,
+    },
+    shared_bathroom_count: {
+      type: Number,
+      default: 0,
+    },
+    encounterType: {
+      type: String,
+      enum: ["host", "family", "other_guests", "roommates"],
+      default: "host",
+    },
+    /******************************** */
     accomodates_count: {
       type: String,
     },
@@ -73,22 +125,38 @@ const DraftListingSchema = new mongoose.Schema(
         BLOCKED: 2,
         UNDER_MAINTENANCE: 3,
       },
+      required: true,
     },
-    start_date: {
+    booking_acceptance_type: {
+      type: String,
+      enum: ["immeadiate", "under_approval"],
+    },
+    start_date_UTC: {
       type: Date,
       default: Date.now(),
     },
-    end_date: {
+    end_date_UTC: {
       type: Date,
+    },
+    unavailable_period_UTC: {
+      from: { type: Date },
+      to: {
+        type: Date,
+        validate: {
+          validator: function (value) {
+            return this.from < value;
+          },
+          message: "To date must be after the From date",
+        },
+      },
     },
     minimum_stay_duration: {
       type: Number,
       default: 1,
     },
-    minimum_stay_timeframe: {
-      type: String,
-      enum: ["day", "week", "month", "year", "night"],
-      default: "day",
+    maximum_stay_duration: {
+      type: Number,
+      default: 365,
     },
     refund_type: {
       type: String,
@@ -102,15 +170,70 @@ const DraftListingSchema = new mongoose.Schema(
         GRACE_PERIOD: "grace_period",
       },
     },
-    checkInTime: {
+    checkin_time: {
       type: String, // You can use a specific type (e.g., Date) based on your needs
+      required: true,
     },
-    checkOutTime: {
+    checkout_time: {
       type: String, // You can use a specific type (e.g., Date) based on your needs
+      required: true,
+    },
+    accepted_guest_type: {
+      type: String,
+      enum: ["Any", "Experienced"],
+      default: "Any",
+    },
+    securityCameras: {
+      type: Boolean,
+      default: false,
+    },
+    weaponsAround: {
+      type: Boolean,
+      default: false,
+    },
+    dangerousAnimalsAround: {
+      type: Boolean,
+      default: false,
+    },
+    weekend_custom_price: {
+      type: Number,
+    },
+    applicable_discounts: {
+      type: [mongoose.Schema.Types.ObjectId], // Discounts aplied by host (first reservation, week-long stay)
+      ref: "DiscountCode",
+    },
+    checkin_method: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "CheckInMethod",
+    },
+    wifi_network_name: {
+      type: String,
+    },
+    wifi_password: {
+      type: String,
+    },
+    house_manual: {
+      type: String,
     },
   },
   { timestamps: true }
 );
+
+const toISOStringMiddleware = (next) => {
+  const dateFields = Object.keys(this.schema.paths).filter(
+    (path) => this[path] instanceof Date
+  );
+
+  dateFields.forEach((field) => {
+    if (this[field]) {
+      this[field] = this[field].toISOString();
+    }
+  });
+
+  next();
+};
+
+DraftListingSchema.pre("save", toISOStringMiddleware);
 
 const DraftListing = mongoose.model("DraftListing", DraftListingSchema);
 export default DraftListing;
