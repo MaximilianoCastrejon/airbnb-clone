@@ -10,7 +10,11 @@ const upload = multer({ storage: storage });
 router.get("/user/:id", handleAsyncError(route.userDetails));
 router.get("/users", handleAsyncError(route.user));
 router.get("/verify", handleAsyncError(route.verifyToken));
-router.post("/signup", upload.single("image"), handleAsyncError(route.signup));
+router.post(
+  "/signup",
+  upload.single("profile_image"),
+  handleAsyncError(route.signup)
+);
 router.post("/login", handleAsyncError(route.login));
 router.post("/logout", handleAsyncError(route.logout));
 

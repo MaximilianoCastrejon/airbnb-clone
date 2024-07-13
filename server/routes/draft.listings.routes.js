@@ -7,21 +7,28 @@ const router = Router();
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-router.get(
-  "user/:user_id/draft-listings/progress/:id",
-  handleAsyncError(route.getDraftListings)
-);
+const fileFields = [{ name: "", maxcount: 1 }];
+
+router.get("listings/:id", handleAsyncError(route.getDraftListings));
+router.get("listings/", handleAsyncError(route.getDraftListings));
+router.post("listings/", handleAsyncError(route.postDraftListing));
+router.put("listings/:id", handleAsyncError(route.updateDraftListing));
+router.delete("listings/:id", handleAsyncError(route.deleteDraftListing));
+
+router.get("photos/:id", handleAsyncError(route.getDraftPhotos));
+router.get("photos/", handleAsyncError(route.getDraftPhoto));
 router.post(
-  "user/:user_id/draft-listings/progress",
-  handleAsyncError(route.postDraftListings)
+  "photos/",
+  upload.array("property_photos", 10),
+  handleAsyncError(route.postDraftPhoto)
 );
-router.put(
-  "user/:user_id/draft-listings/progress/:id",
-  handleAsyncError(route.updateDraftListings)
-);
-router.delete(
-  "user/:user_id/draft-listings/progress/:id",
-  handleAsyncError(route.deleteDraftListings)
-);
+router.put("photos/:id", handleAsyncError(route.updateDraftPhoto));
+router.delete("photos/:id", handleAsyncError(route.deleteDraftPhoto));
+
+router.get("address/:id", handleAsyncError(route.getDraftAddress));
+router.get("address/", handleAsyncError(route.getDraftAddress));
+router.post("address/", handleAsyncError(route.postDraftListing));
+router.put("address/:id", handleAsyncError(route.updateDraftListing));
+router.delete("address/:id", handleAsyncError(route.deleteDraftListing));
 
 export default router;
