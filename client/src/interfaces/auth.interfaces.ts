@@ -21,6 +21,20 @@ export interface User {
   // Other user-related fields
 }
 
+export interface UserDetails {
+  refered_by?: string;
+  username: string;
+  middle_name?: string;
+  first_last_name?: string;
+  second_last_name?: string;
+  email: string;
+  password: string;
+  profile_image_url: string;
+  isSuperHost?: boolean;
+  referal_code?: string;
+  address?: string;
+}
+
 export interface SignupCredentials {
   username: string;
   email: string;

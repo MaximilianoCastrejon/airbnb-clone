@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute';
 import * as page from './pages';
 import Layout from './Layout';
-import UserHeader from './components/UserHeader';
+import UserHeader from './components/Header_User';
 
 function App() {
   return (
@@ -12,10 +12,11 @@ function App() {
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<page.HomePage />} />
-            <Route path="/:id" element={<page.Listing />} />
+            <Route path="/:id" element={<page.ListingCard />} />
           </Route>
+
           <Route element={<ProtectedRoute />}>
-            <Route path="/" element={<UserHeader />}>
+            <Route element={<UserHeader />}>
               <Route path="/trips" element={<page.Trips />} />
               <Route path="/account" element={<page.Account />} />
               <Route
@@ -51,6 +52,8 @@ function App() {
                 path="/account/professional-hosting"
                 element={<page.ProfHosting />}
               />
+              {/* Hosting home panel */}
+
               <Route path="/invite" element={<page.Invite />} />
               <Route path="/messages" element={<page.Messages />} />
               <Route path="/wishlist" element={<page.WishList />} />
@@ -58,13 +61,21 @@ function App() {
               <Route path="/settings" element={<page.Settings />} />
               <Route path="/inbox" element={<page.Inbox />} />
             </Route>
-
             <Route path="/airbnb-your-home" element={<page.YourHome />} />
-            <Route path="/host/homes" element={<page.HostHome />} />
-            <Route path="/become-a-host" element={<page.BecomeAHost />} />
+            {/* Hosting promotion page */}
+            <Route path="/host/homes" element={<page.HostHomes />} />
             <Route path="/refer" element={<page.Refer />} />
             <Route path="/gift-card" element={<page.GiftCard />} />
             <Route path="/help-center" element={<page.HelpCenter />} />
+
+            <Route path="/hosting/" element={<page.Hosting />}>
+              <Route path="" element={<page.Today />}></Route>
+              <Route path="multi-calendar" element={<page.Calendar />}></Route>
+              <Route path="listings" element={<page.ListingForm />}></Route>
+
+              <Route path="testing" element={<page.Testing />}></Route>
+              <Route path="messages" element={<page.Inbox />}></Route>
+            </Route>
           </Route>
           <Route path="/*" element={<page.NotFound />} />
         </Routes>

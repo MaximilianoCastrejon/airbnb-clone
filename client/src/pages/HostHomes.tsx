@@ -1,15 +1,21 @@
-import { GOOGL_API_KEY } from '../config';
-import Header_HostHome from '../components/Header_HostHome';
+import { GOOGLE_API_KEY } from '../config';
+import Header_HostHomes from '../components/Header_HostHomes';
 import { GoogleMap, useJsApiLoader } from '@react-google-maps/api';
+import { GOOGLE_MAPS_LIBRARIES } from '../config.js';
 import ServiceUnavailable from '../components/ServiceUnavailable';
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { GoogleAddressComponent } from '../interfaces/maps.interfaces.js';
+import axios from 'axios';
 
-function HostHome() {
+function HostHomes() {
   const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: GOOGL_API_KEY,
-    libraries: ['places']
+    googleMapsApiKey: GOOGLE_API_KEY,
+    libraries: GOOGLE_MAPS_LIBRARIES
   });
-  const [coordinates, setCoordinates] = useState<{
+  // TODO: change into a custom hook
+
+  const [mapCenter, setMapCenter] = useState<{
     lat: number;
     lng: number;
   }>({
@@ -22,22 +28,53 @@ function HostHome() {
       navigator.geolocation.getCurrentPosition(
         (location) => {
           const { latitude, longitude } = location.coords;
-          setCoordinates({ lat: latitude, lng: longitude });
+          centerCountry(latitude, longitude);
         },
-        () => {}
+        (error) => {
+          console.error('Error getting user location:', error);
+        }
       );
     } else {
       console.log('Geolocation is not supported by this browser.');
     }
   }, []);
+
+  const centerCountry = async (lat: number, lng: number) => {
+    try {
+      const response = await axios.get(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_API_KEY}`
+      );
+      const data = response.data;
+
+      if (data.status != 'OK') throw new Error('Geocoding API request failed');
+
+      const countryComponent = data.results[0].address_components.find(
+        (component: GoogleAddressComponent) =>
+          component.types.includes('country')
+      );
+      if (!countryComponent)
+        throw new Error('Country component not found in geocoding response.');
+
+      const isoCountry = countryComponent.short_name;
+      const countryCenterRes = await axios.get(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${isoCountry}&key=${GOOGLE_API_KEY}`
+      );
+      const countryCenter = countryCenterRes.data.results[0].geometry.location;
+      setMapCenter({ lat: countryCenter.lat, lng: countryCenter.lng });
+    } catch (error) {
+      console.error('Error positioning map center:', error);
+    }
+  };
   return (
     <div>
-      <Header_HostHome />
+      <Header_HostHomes />
       <div className="h-[calc(90vh-5rem)] mt-[10vh] flex flex-row px-20">
         <div className="w-1/2 flex flex-col justify-center items-center">
           <p className="text-primary text-5xl font-semibold mb-2">Airbnb it.</p>
           <p className="text-5xl font-semibold mb-6">Your could earn</p>
-          <p className="text-7xl font-semibold m-3">$4,941 MXN</p>
+          <p className="text-7xl font-semibold align-middle justify-center  text-center items-center m-3">
+            $4,941 MXN
+          </p>
           <p>
             <span className="underline cursor-pointer font-semibold">
               7 nights
@@ -49,8 +86,8 @@ function HostHome() {
         <div className="w-1/2 rounded-lg overflow-hidden">
           {isLoaded ? (
             <GoogleMap
-              center={coordinates}
-              zoom={13}
+              center={mapCenter}
+              zoom={8}
               mapContainerStyle={{ width: '100%', height: '100%' }}
               options={{
                 zoomControl: false,
@@ -65,9 +102,9 @@ function HostHome() {
         </div>
       </div>
       <div className="flex flex-col px-20 mb-20">
-        <a className="font-semibold text-4xl my-28 text-center">
-          Airbnb is easily with Airbnb Setup
-        </a>
+        <Link to={''} className="font-semibold text-4xl my-28 text-center">
+          Airbnb it easily with Airbnb Setup
+        </Link>
         <img
           src={'../src/assets/host-homes-super-hosts.webp'}
           className="w-full h-full"
@@ -250,9 +287,12 @@ function HostHome() {
             <p className="text-neutral-500 mt-2">
               Comparison is based on public information and free offerings by
               top competitors as of 10/22. Find details and exclusions{' '}
-              <a className="underline font-medium text-neutral-800 cursor-pointer">
+              <Link
+                to={''}
+                className="underline font-medium text-neutral-800 cursor-pointer"
+              >
                 here
-              </a>
+              </Link>
               .
             </p>
           </div>
@@ -319,7 +359,7 @@ function HostHome() {
   );
 }
 
-export default HostHome;
+export default HostHomes;
 
 function CheckSVG({ svgType }: { svgType: string }) {
   return (

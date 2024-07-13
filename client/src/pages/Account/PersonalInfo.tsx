@@ -1,7 +1,9 @@
+import { useEffect } from 'react';
 import { useAuth } from '../../context/AuthProvider';
 
 function PersonalInfo() {
   const { userContext } = useAuth();
+
   return (
     <div className="max-w-5xl px-6 mx-auto mb-12">
       <div className="my-5">
