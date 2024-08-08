@@ -1,13 +1,13 @@
 import mongoose from "mongoose";
 
 /*
-| Classification       | Validation Logic                                                                               |
-|----------------------|------------------------------------------------------------------------------------------------|
-| qualitative          | Check if fieldName matches stringValue.                                                        |
-| quantitative         | Check if a value matches numberValue.                                                          |
-| quantitative_range   | Check if a value falls within numberRange.                                                     |
-| date_range           | Check if dateRange.from and dateRange.to cover the current date or booking date.               |
-| recurring_time_frame | Check if the current date falls within from and to and matches the daysOfWeek, days, months.   |
+| Classification       | Validation Logic                                                                                 |
+|----------------------|--------------------------------------------------------------------------------------------------|
+| qualitative          | Check if fieldName matches stringValue.                                                          |
+| quantitative         | Check if a value matches numberValue.                                                            |
+| quantitative_range   | Check if a value falls within numberRange.                                                       |
+| date_range           | Check if dateRange.from and dateRange.to cover the current date or booking date.                 |
+| recurring_time_frame | Check if the current date falls within 'from' and 'to' and matches the daysOfWeek, days, months. |
  */
 
 const DiscountCriteriaSchema = new mongoose.Schema(
