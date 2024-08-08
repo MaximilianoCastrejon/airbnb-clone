@@ -1,4 +1,5 @@
-import { DiscountCriteriaSchema } from "./discount.criteria.model";
+import mongoose from "mongoose";
+import { DiscountCriteriaSchema } from "./discount.criteria.model.js";
 
 const ListingCriteriaSchema = new mongoose.Schema(
   {

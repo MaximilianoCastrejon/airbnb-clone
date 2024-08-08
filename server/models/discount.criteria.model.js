@@ -10,7 +10,7 @@ import mongoose from "mongoose";
 | recurring_time_frame | Check if the current date falls within 'from' and 'to' and matches the daysOfWeek, days, months. |
  */
 
-const DiscountCriteriaSchema = new mongoose.Schema(
+export const DiscountCriteriaSchema = new mongoose.Schema(
   {
     classification: {
       type: String,

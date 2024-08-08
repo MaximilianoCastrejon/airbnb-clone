@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { DiscountCriteriaSchema } from "./discount.criteria.model";
+import { DiscountCriteriaSchema } from "./discount.criteria.model.js";
 
 /*
   instances_in_other_models: Tells if doc referencing User complies by certain criteria. And counts
