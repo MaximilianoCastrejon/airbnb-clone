@@ -9,8 +9,8 @@
  */
 
 import mongoose from "mongoose";
-import DiscountCode from "../models/discount.code.model";
-import DiscountCriteria from "../models/discount.criteria.model";
+import DiscountCode from "../models/discount.code.model.js";
+import DiscountCriteria from "../models/discount.criteria.model.js";
 
 /*
   Example of use:

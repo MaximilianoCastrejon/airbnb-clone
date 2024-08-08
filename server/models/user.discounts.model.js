@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+
 const UserDiscountCodeSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   discountCodeId: { type: mongoose.Schema.Types.ObjectId, ref: "DiscountCode" },

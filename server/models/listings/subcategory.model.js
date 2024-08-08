@@ -1,5 +1,4 @@
 /*
-
 Residential Subcategories:
   Single Family Home
   Apartment Building

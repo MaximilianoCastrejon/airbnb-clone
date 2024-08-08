@@ -10,7 +10,7 @@ import mongoose from "mongoose";
 | recurring_time_frame | Check if the current date falls within from and to and matches the daysOfWeek, days, months.   |
  */
 
-export const DiscountCriteriaSchema = new mongoose.Schema(
+const DiscountCriteriaSchema = new mongoose.Schema(
   {
     classification: {
       type: String,
@@ -77,14 +77,6 @@ DiscountCriteriaSchema.pre("save", async function (next) {
   }
 });
 
-DiscountCriteriaSchema.pre("save", toISOStringMiddleware);
-
-const DiscountCriteria = mongoose.model(
-  "DiscountCriteria",
-  DiscountCriteriaSchema
-);
-export default DiscountCriteria;
-
 const toISOStringMiddleware = (next) => {
   const dateFields = Object.keys(this.schema.paths).filter(
     (path) => this[path] instanceof Date
@@ -113,6 +105,14 @@ const isModelValid = async function (modelName) {
     return false;
   }
 };
+
+DiscountCriteriaSchema.pre("save", toISOStringMiddleware);
+
+const DiscountCriteria = mongoose.model(
+  "DiscountCriteria",
+  DiscountCriteriaSchema
+);
+export default DiscountCriteria;
 
 // const isReferenceValid = async function (modelName, referenceField) {
 //   try {
