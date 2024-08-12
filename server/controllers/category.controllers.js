@@ -27,10 +27,12 @@ export const getCategories = async (req, res) => {
     query: query,
     numericFilters: numericFilters,
     structure: structureQuery,
-    count: count
+    count: count,
   });
-  if(!result){
-    throw
+  if (!result) {
+    throw new async_errors.NotFoundError(
+      "No categories found that matched the criteria"
+    );
   }
   res.status(StatusCodes.OK).json(result);
 };
