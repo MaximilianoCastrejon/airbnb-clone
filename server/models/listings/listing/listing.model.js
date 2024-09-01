@@ -216,10 +216,6 @@ const ListingSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    applicable_discounts: {
-      type: [mongoose.Schema.Types.ObjectId], // Discounts aplied by host (first reservation, week-long stay)
-      ref: "DiscountCode",
-    },
     checkin_method: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "CheckInMethod",
@@ -232,6 +228,11 @@ const ListingSchema = new mongoose.Schema(
     },
     house_manual: {
       type: String,
+    },
+    discount_id: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "DiscountCode",
+      require: true,
     },
   },
   { timestamps: true }

@@ -8,7 +8,7 @@ import checkDiscountValidity from "../libs/validateDiscount.js";
 import ListingDiscountCode from "../models/listing.discount.model.js";
 
 export const quotePrice = async (req, res) => {
-  // listingId, userId, price, ...other_booking_fields
+  // Set token with quoted price. Reload page on token expiration
   const { bookingContext } = req.body;
 
   const userDiscounts = await UserDiscountCode.find({
@@ -84,12 +84,26 @@ const priceLock = (req, res) => {
   res.json({ message: "Price locked. Proceed to confirm booking." });
 };
 
-const postBooking = (req, res) => {
+export const createBooking = async (req, res) => {
   const fields = req.body;
   const priceLockToken = req.cookies.priceLockToken;
 
-  // decode priceLockToken if available
-  // create booking fpr user, listing at price
+  // decode priceLockToken if available. With list of discount codes
+  // create booking for user, listing at price
+  for (const discountCode of discountCodes) {
+    const discount = await DiscountCode.findOne({ code: discountCode });
+    await DiscountCode.findByIdAndUpdate(discount._id, {
+      current_uses: discount.current_uses + 1,
+    });
+    await ListingDiscountCode.findOneAndUpdate(
+      { discount_code_id: discount._id },
+      { current_uses: listingDiscountFound.current_uses + 1 }
+    );
+    await UserDiscountCode.findOneAndUpdate(
+      { discount_code_id: discount._id },
+      { current_uses: userDiscountFound.current_uses + 1 }
+    );
+  }
 };
 
 export const getListingCalendar = async (req, res) => {
@@ -118,12 +132,11 @@ export const getBookings = async (req, res) => {
     ...(populate && { populate }),
   };
 
-  // const result = await buildQuery(Booking, {
-  //   query: query,
-  //   numericFilters: numericFilters,
-  //   structure: structureQuery,
-  //   count: count,
-  // });
-  const result = count ? 0 : [];
+  const result = await buildQuery(Booking, {
+    query: query,
+    numericFilters: numericFilters,
+    structure: structureQuery,
+    count: count,
+  });
   res.status(StatusCodes.OK).json(result);
 };

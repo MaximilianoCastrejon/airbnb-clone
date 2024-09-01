@@ -10,7 +10,11 @@ const AmenitySchema = new mongoose.Schema(
     description: {
       type: String,
     },
-    type: { type: mongoose.Schema.Types.ObjectId, ref: "AmenityType" },
+    type: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "AmenityType",
+      require: true,
+    },
     icon_path: {
       type: String,
       require: true,

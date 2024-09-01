@@ -18,7 +18,6 @@ const AddressSchema = new mongoose.Schema(
     street_name: {
       type: String,
       require: true,
-      unique: true,
     },
     street_number: {
       type: Number,
@@ -67,7 +66,6 @@ const AddressSchema = new mongoose.Schema(
     active: {
       type: Boolean,
       default: true,
-      require: true,
     },
   },
   {

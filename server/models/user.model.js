@@ -39,11 +39,6 @@ const UserSchema = new mongoose.Schema(
     referal_code: {
       type: String,
     },
-    address: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Address",
-      // require: true,
-    },
   },
   { timestamps: true }
 );

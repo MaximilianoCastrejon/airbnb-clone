@@ -16,6 +16,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { TOKEN_SECRET } from "../config.js";
 import Listing from "../models/listings/listing/listing.model.js";
 import { createReferralCode } from "../libs/createReferalCode.js";
+import Address from "../models/address.model.js";
 
 export const user = async (req, res) => {
   const { email } = req.query;
@@ -39,8 +40,8 @@ export const userDetails = async (req, res) => {
   };
   const command = new GetObjectCommand(queryParams);
   const url = await getSignedUrl(s3, command, { expiresIn: 60 * 60 * 3 });
-  const userInfo = { ...user, profile_image_url: url };
-
+  const address = await Address.findOne({ user_id: id });
+  const userInfo = { user, profile_image_url: url, address };
   res.status(StatusCodes.OK).json(userInfo);
 };
 

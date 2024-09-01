@@ -12,12 +12,6 @@ const BookingSchema = new mongoose.Schema(
       ref: "User",
       require: true,
     },
-    cohosts: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
     guest_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -72,10 +66,6 @@ const BookingSchema = new mongoose.Schema(
     effective_amount: {
       type: Number,
     },
-    discount_codes: [
-      { type: mongoose.Schema.Types.ObjectId, ref: "DiscountCode" },
-    ],
-
     booking_date_UTC: {
       type: Date,
       require: true,
@@ -87,6 +77,16 @@ const BookingSchema = new mongoose.Schema(
     },
     canceled_by_host: {
       type: Boolean,
+    },
+    discount_id: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "DiscountCode",
+      require: true,
+    },
+    cohost_id: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "User",
+      require: true,
     },
   },
   { timestamps: true }
