@@ -82,7 +82,8 @@ export const buildQuery = async (
     const decodedQuery = decodeURIComponent(query);
     const userQuery = await JSON.parse(decodedQuery);
     for (const key in userQuery) {
-      if (Array.isArray(userQuery[key] && arrayPaths.includes(key))) {
+      if (Array.isArray(userQuery[key]) && arrayPaths.includes(key)) {
+        console.log(arrayPaths);
         processedQuery[key] = { $in: userQuery[key] }; // Exact match
       } else if (stringPaths.includes(key)) {
         const regexPattern = new RegExp(userQuery[key], "is");
