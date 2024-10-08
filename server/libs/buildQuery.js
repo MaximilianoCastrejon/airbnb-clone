@@ -61,7 +61,7 @@ export const buildQuery = async (
   const booleanPaths = Object.keys(schema.schema.paths).filter(
     (path) => schema.schema.paths[path].instance === "Boolean"
   );
-const datePaths = Object.keys(schema.schema.paths).filter(
+  const datePaths = Object.keys(schema.schema.paths).filter(
     (path) => schema.schema.paths[path].instance === "Date"
   );
 
@@ -74,8 +74,8 @@ const datePaths = Object.keys(schema.schema.paths).filter(
       // queryItem = "price_$gt_2000"
       let [field, operator, filterValue] = queryItem.split("_");
       if (numberPaths.includes(field)) {
-                  filterValue = Number(filterValue);
-        } else if (datePaths.includes(field)) {
+        filterValue = Number(filterValue);
+      } else if (datePaths.includes(field)) {
         const date = new Date(filterValue);
         if (date === "Invalid Date") {
           messages.push(
@@ -93,7 +93,7 @@ const datePaths = Object.keys(schema.schema.paths).filter(
         );
       }
       processedQuery[field] = { [operator]: filterValue };
-          }
+    }
   }
 
   // query = {"result":true, "count":42}
@@ -112,7 +112,7 @@ const datePaths = Object.keys(schema.schema.paths).filter(
         processedQuery[key] = userQuery[key];
       } else if (booleanPaths.includes(key)) {
         processedQuery[key] = userQuery[key];
-} else {
+      } else {
         messages.push(
           `${key} in query did not match any string or boolean field in ${schema.modelName}`
         );
@@ -123,7 +123,7 @@ const datePaths = Object.keys(schema.schema.paths).filter(
   let result = schema.find(processedQuery);
   if (count) {
     const count = await result.countDocuments();
-return [count, messages];
+    return [count, messages];
   }
 
   const { projection, sort, pagination, populate } = structure;
@@ -156,7 +156,7 @@ return [count, messages];
     const toPage = limit * (page <= totalPages ? pagesSkiped : skipToLastPage);
 
     result = result.skip(toPage).limit(limit);
-      }
+  }
 
   if (populate && populate.lenght > 0) {
     const pop = populate
