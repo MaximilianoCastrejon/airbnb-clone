@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 
-function Header_HostHomes() {
+function Header_Host_Landing() {
   // TODO: check if user has listings on drafts or finshed
   // if not, then create draft and redirect to draft,
   return (
@@ -52,4 +52,4 @@ function Header_HostHomes() {
   );
 }
 
-export default Header_HostHomes;
+export default Header_Host_Landing;
