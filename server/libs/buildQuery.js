@@ -1,32 +1,42 @@
 import mongoose from "mongoose";
 
 /**
- * Function to query all documents that fit search terms in params.
- * @param {mongoose.Schema} schema - Mongoose schema.
- * @param {Object} options - Object containing options for querying documents.
- * @param {string} [options.query] - query = '{"property_A":true, "property_B":"value B", "property_C":["value_C", "value_D"]}' (optional).
- * @param {string} [options.numericFilters] - numericFilters = "property_A>2000,property_B>2,createdAt>2023-04-01,createdAt<2023-04-10" Dates = yyyy-mm-dd (optional).
- * @param {boolean} [options.count=false] - Flag to indicate whether to return only the count.
- * @param {{ projection: String, sort: String, pagination: {page: Number, offset: Number}, populate: String }} [options.structure] - Structure how your resulting documents will look like
- *     - projection: A string representing projection fields.
- *     - sort: A string representing sort criteria.
- *     - pagination: An object with page and offset properties.
- *     - populate: A string representing fields to populate.
- *   Example usage:
- *     {
- *       projection: "property_A,property_B,property_C",
- *       sort: "-property_A,property_B,-property_C",
- *       pagination: { page: 3, offset: 20 },
- *       populate: "property_A,property_B,property_C"
- *     }
- * - (optional).
- *  *
- * @param {string} [options.structure.sort] - Sort criteria.
+ * Executes a query on a Mongoose model with optional filters, projections, sorting, pagination,
+ * and population of related documents.
+ *
+ * @async
+ * @param {mongoose.Model} schema - The Mongoose model to query.
+ * @param {Object} options - An object containing various query options.
+ * @param {Object} [options.query] - MongoDB query filters (e.g., {"field_A":true, "field_B":"value B", "field_C":["value_C", "value_D"]}).
+ * @param {Object} [options.numericFilters] - Numeric filters for querying (e.g., "property_A>2000,property_B>2,createdAt>2023-04-01,createdAt<2023-04-10").
+ * @param {Object} [options.structure] - Query structure options, including projection, sorting, pagination, and population.
+ * @param {string} [options.structure.projection] - Fields to include or exclude from the results (e.g., "name price").
+ * @param {string} [options.structure.sort] - Sorting criteria (e.g., "-createdAt" for descending order).
  * @param {Object} [options.structure.pagination] - Pagination options.
- * @param {number} [options.structure.pagination.page] - Page number.
- * @param {number} [options.structure.pagination.offset] - Offset.
- * @param {string} [options.structure.populate] - Fields to populate.
- * @returns {Array|number} - If count is true, returns the count of matching documents, otherwise returns an array of documents.
+ * @param {number} [options.structure.pagination.page=1] - The page number for pagination.
+ * @param {number} [options.structure.pagination.limit=10] - The number of results per page.
+ * @param {string} [options.structure.populate] - Fields to populate with related documents.
+ * @param {boolean} [options.count=false] - If true, returns only the total count of documents matching the query.
+ *
+ * @returns {Promise<[Object|number, string[]]>} - A promise that resolves to an array containing:
+ *   - The result of the query (either an array of documents or the document count).
+ *   - An array of messages indicating any issues or status updates related to the query.
+ *
+ * @throws {NotFoundError} - Throws if no matching documents are found.
+ *
+ * @example
+ * const options = {
+ *   query: {"field_A":true, "field_B":"value B", "field_C":["value_C", "value_D"]},
+ *   numericFilters: "property_A>2000,property_B>2,createdAt>2023-04-01,createdAt<2023-04-10",
+ *   structure: {
+ *     projection: "name price",
+ *     sort: "-createdAt",
+ *     pagination: { page: 2, limit: 20 },
+ *     populate: "user"
+ *   },
+ *   count: false
+ * };
+ * const [result, messages] = await buildQuery(ProductModel, options);
  */
 export const buildQuery = async (
   schema,
