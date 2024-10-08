@@ -4,13 +4,13 @@ export interface Listing {
   title: string;
   host_id: string;
   description: string;
-  category: Category | '';
+  reservation_type: ReservationType;
   subcategory: string;
   address: string;
-  bedroom_count: number; // Category: Entire place & Private rooms
-  bed_count: number; // Category: Entire place & Shared rooms & Private rooms
-  bathrooms: number; // Category: Entire place & Shared rooms
-  lockOnEveryBedroom?: boolean; // Category: Private rooms -
+  bedroom_count: number; // ReservationType: Entire place & Private rooms
+  bed_count: number; // ReservationType: Entire place & Shared rooms & Private rooms
+  bathrooms: number; // ReservationType: Entire place & Shared rooms
+  lockOnEveryBedroom?: boolean; // ReservationType: Private rooms -
   private_bathroom_count: number;
   dedicated_bathroom_count: number;
   shared_bathroom_count: number;
@@ -53,6 +53,26 @@ export interface Listing {
   wifi_password?: string;
   house_manual?: string;
 }
+
+export type ReservationTypeNames =
+  | 'Entire place'
+  | 'Private room'
+  | 'Shared room';
+
+export interface ReservationType {
+  _id: string;
+  name: ReservationTypeNames | '';
+  description: string;
+  svg_icon_paths: string[];
+  active: boolean;
+}
+export const ReservationTypeInitialState: ReservationType = {
+  _id: '',
+  name: '',
+  description: '',
+  svg_icon_paths: [''],
+  active: true
+};
 
 export const ListingInitialState: Listing = {
   title: '',
