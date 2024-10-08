@@ -1,18 +1,20 @@
-import * as async_errors from "../errors/errors.barrel.js";
-import { StatusCodes } from "http-status-codes";
-import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { createAccessToken } from "../libs/createJWT.js";
+import sharp from "sharp";
+import { StatusCodes } from "http-status-codes";
+import User from "../models/user.model.js";
+import Address from "../models/address.model.js";
+import Listing from "../models/listings/listing/listing.model.js";
 import { s3, s3Name } from "../db/s3.client.js";
 import {
   GetObjectCommand,
   NotFound,
   PutObjectCommand,
 } from "@aws-sdk/client-s3";
-import { randomImageName } from "../libs/createID.js";
-import sharp from "sharp";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { createAccessToken } from "../libs/createJWT.js";
+import * as async_errors from "../errors/errors.barrel.js";
+import { randomImageName } from "../libs/createID.js";
 import { TOKEN_SECRET } from "../config.js";
 import createReferralCode from "../libs/createReferalCode.js";
 import queryDocs from "../libs/queryDocs.js";
