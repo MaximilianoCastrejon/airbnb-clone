@@ -18,53 +18,10 @@ import * as async_errors from "../errors/errors.barrel.js";
 import SubCategory from "../models/listings/subcategory.model.js";
 
 export const getListings = async (req, res) => {
-  const {
-    query,
-    numericFilters,
-    projection,
-    sort,
-    page,
-    offset,
-    populate,
-    count,
-  } = req.query;
+  const { result: docs, messages } = await queryDocs(Listing, req.query);
+  if (!docs) throw new async_errors.NotFoundError(messages.toString());
 
-  const structureQuery = {
-    ...(projection && { projection }),
-    ...(page && offset && { pagination: { page, limit: offset } }),
-    ...(sort && { sort }),
-    ...(populate && { populate }),
-  };
-
-  const quieriedListings = await buildQuery(Listing, {
-    query: query,
-    numericFilters: numericFilters,
-    structure: structureQuery,
-    count: count,
-  });
-
-  // const getPriceInfo = async () => {
-  //   const Listings = [];
-
-  //   for (const Listing in quieriedListings) {
-  //     query.listing_id = Listing._id;
-  //     const priceInfo = await buildQuery(
-  //       Price,
-  //       query,
-  //       numericFilters,
-  //       structureQuery
-  //     );
-  //     Listings.push({
-  //       ...Listing,
-  //       ...priceInfo,
-  //     });
-  //   }
-  //   return Listings;
-  // };
-
-  // const listings = await getPriceInfo();
-
-  res.status(StatusCodes.OK).json({ quieriedListings });
+  res.status(StatusCodes.OK).json({ result: docs });
 };
 
 export const getListing = async (req, res) => {
@@ -91,33 +48,11 @@ export const updateListing = async (req, res) => {
   res.status(StatusCodes.OK).json({});
 };
 
+// REVIEWS
 export const getReviews = async (req, res) => {
-  const {
-    query,
-    numericFilters,
-    projection,
-    sort,
-    page,
-    offset,
-    populate,
-    count,
-  } = req.query;
-
-  const structureQuery = {
-    ...(projection && { projection }),
-    ...(page && offset && { pagination: { page, limit: offset } }),
-    ...(sort && { sort }),
-    ...(populate && { populate }),
-  };
-
-  const result = await buildQuery(Review, {
-    query: query,
-    numericFilters: numericFilters,
-    structure: structureQuery,
-    count: count,
-  });
-
-  res.status(StatusCodes.OK).json(result);
+  const { result: docs, messages } = await queryDocs(Review, req.query);
+  if (!docs) throw new async_errors.NotFoundError(messages.toString());
+  res.status(StatusCodes.OK).json({ result: docs });
 };
 export const getReview = async (req, res) => {
   res.status(StatusCodes.OK).json({});

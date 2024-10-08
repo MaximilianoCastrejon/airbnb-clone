@@ -19,15 +19,11 @@ import queryDocs from "../libs/queryDocs.js";
 import createDocument from "../libs/createDocument.js";
 
 export const user = async (req, res) => {
-  const { email } = req.query;
-  if (email) {
-    const foundUser = await User.findOne({ email: email });
+  const { result: docs, messages } = await queryDocs(User, req.query);
+  if (!docs) throw new async_errors.NotFoundError(messages.toString());
 
-    if (foundUser) return res.status(StatusCodes.OK).json({ hasAccount: true });
-  }
-
-  res.send("Hola");
-};
+    return res.status(StatusCodes.OK).json({ result: docs });
+  };
 
 export const userDetails = async (req, res) => {
   const { id } = req.params;

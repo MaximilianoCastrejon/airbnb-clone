@@ -6,73 +6,8 @@ import DiscountCode from "../models/discount.code.model.js";
 import Listing from "../models/listings/listing/listing.model.js";
 import checkDiscountValidity from "../libs/validateDiscount.js";
 import ListingDiscountCode from "../models/listing.discount.model.js";
+import queryDocs from "../libs/queryDocs.js";
 
-export const quotePrice = async (req, res) => {
-  // Set token with quoted price. Reload page on token expiration
-  const { bookingContext } = req.body;
-
-  const userDiscounts = await UserDiscountCode.find({
-    user_id: bookingContext.user_id,
-  });
-  const listingCodes = await ListingDiscountCode.find({
-    listingId: bookingContext.listing_id,
-  }).select("discountCodeId");
-
-  let finalPrice = bookingContext.total_reservation_cost;
-  let matchedCodes = [];
-  for (const code of userDiscounts) {
-    const match = listingCodes.find((discount_code) => {
-      if (
-        code.maxUses > code.currentUses &&
-        discount_code === code.discountCodeId
-      )
-        return code.discountCodeId;
-    });
-    if (match) {
-      matchedCodes.push(match);
-      const discount = DiscountCode.findOne({ code: match });
-      if (
-        discount &&
-        Date.now() < discount.expirationDate &&
-        Date.now() > discount.startDate
-      ) {
-        const chargablePercentage = 1 - discount.discount;
-        finalPrice *= chargablePercentage;
-      }
-    }
-  }
-
-  // Porcess booking discounts
-  // Check if criteria from matchedCodes array is valid for Booking
-  let isBookingEligible;
-  for (const code of matchedCodes) {
-    isBookingEligible = await checkDiscountValidity(
-      bookingContext,
-      code,
-      "bookingCriteria",
-      "BookingCriteria"
-    );
-    if (isBookingEligible) {
-      const discount_code = await DiscountCode.findById(code);
-      if (!discount_code) {
-        console.log(`Discount code with id "${code}" could not be found`);
-      } else {
-        const chargablePercentage = 1 - discount_code.discount;
-        finalPrice *= chargablePercentage;
-      }
-    }
-  }
-
-  bookingContext.total_discounted_reservation_cost = finalPrice;
-
-  res.status(StatusCodes.OK).json(bookingContext);
-};
-
-const priceLock = (req, res) => {
-  // Receive jwt with discounts
-  const { listingId, userId, price } = req.body;
-
-  const priceLockToken = generatePriceLockToken({ listingId, userId, price });
 
   res.cookie("priceLockToken", priceLockToken, { httpOnly: true });
 
@@ -114,29 +49,8 @@ export const getListingCalendar = async (req, res) => {
 };
 
 export const getBookings = async (req, res) => {
-  const {
-    query,
-    numericFilters,
-    projection,
-    sort,
-    page,
-    offset,
-    populate,
-    count,
-  } = req.query;
-
-  const structureQuery = {
-    ...(projection && { projection }),
-    ...(page && offset && { pagination: { page, limit: offset } }),
-    ...(sort && { sort }),
-    ...(populate && { populate }),
-  };
-
-  const result = await buildQuery(Booking, {
-    query: query,
-    numericFilters: numericFilters,
-    structure: structureQuery,
-    count: count,
-  });
-  res.status(StatusCodes.OK).json(result);
+  const { result, messages } = await queryDocs(Booking, req.query);
+  if (!result) throw new async_errors.NotFoundError(messages.toString());
+  console.log(result);
+  res.status(StatusCodes.OK).json({ data: result });
 };

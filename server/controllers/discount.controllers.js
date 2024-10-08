@@ -9,9 +9,13 @@ import UserDiscountCode from "../models/user.discounts.model.js";
 import ListingDiscountCode from "../models/listing.discount.model.js";
 import Criteria from "../models/criteria.model.js";
 import mongoose from "mongoose";
+import queryDocs from "../libs/queryDocs.js";
 
 export const getDiscounts = async (req, res) => {
-  res.status(StatusCodes.OK).json({});
+const { result, messages } = await queryDocs(DiscountCode, req.query);
+  if (!result) throw new async_errors.NotFoundError(messages.toString());
+  console.log(result);
+  res.status(StatusCodes.OK).json({ data: result });
 };
 export const getDiscount = async (req, res) => {
   res.status(StatusCodes.OK).json({});
@@ -65,15 +69,14 @@ export const checkListingDiscountValidity = async (req, res) => {
   res.status(StatusCodes.OK).json({});
 };
 
-export const checkUserDiscountValidity = async (req, res) => {
-  const { id } = req.params;
-  const { discountCode } = req.query;
+export const getUserCodes = async (req, res) => {
+  const { result, messages } = await queryDocs(User, req.query);
+  if (!result) throw new async_errors.NotFoundError(messages.toString());
+  console.log(result);
+  res.status(StatusCodes.OK).json({ data: result });
+};
 
-  const context = await User.findById(id);
-
-  const isEligible = await validateDiscount(context, discountCode, "user");
-  let discountAdded;
-  if (isEligible) {
+export const createUserCode = async (req, res) => {
     const discountCodeId = await DiscountCode.findOne({ code: discountCode });
     discountAdded = await createDocument(UserDiscountCode, {
       user_id: id,
@@ -221,56 +224,11 @@ export const getCriterion = async (req, res) => {
   res.status(StatusCodes.OK).json(result);
 };
 
-export const createConfirmationToken = async (req, res) => {
-  const { id } = req.params;
-  const criterion = await Criteria.findById(id);
-  if (!criterion) {
-    throw new async_errors.NotFoundError(
-      "No resource found in database with that ID. No confirmation token created"
-    );
-  }
-  if (criterion.classification !== "instance_count")
-    res.status(StatusCodes.NO_CONTENT).send();
-
-  const stagedItems = await Criteria.aggregate([
-    { $match: { _id: id } },
-    {
-      $graphLookup: {
-        from: "criterias",
-        startWith: "$parentCriteria",
-        connectFromField: "parentCriteria",
-        connectToField: "_id",
-        as: "allParents",
-        maxDepth: 10,
-        depthField: "parentDepth", // Optional field to indicate depth
-      },
-    },
-
-    // Fetch all child criteria recursively
-    {
-      $graphLookup: {
-        from: "criterias",
-        startWith: "$nestedCriteria",
-        connectFromField: "nestedCriteria",
-        connectToField: "_id",
-        as: "allChildren",
-        maxDepth: 10,
-        depthField: "childDepth", // Optional field to indicate depth
-      },
-    },
-  ]);
-  const token = await new Promise((resolve, reject) => {
-    jwt.sign(
-      { doc_id: id },
-      TOKEN_SECRET,
-      { expiresIn: 60 * 2 },
-      (err, token) => {
-        if (err) reject("JWT failed");
-        resolve(token);
-      }
-    );
-  });
-  if (!token)
+export const getListingCodes = async (req, res) => {
+  const docs = await queryDocs(ListingDiscountCode, req.query);
+  if (!docs) throw new async_errors.NotFoundError("No listing codes found");
+  res.status(StatusCodes.OK).json({ docs });
+};
     throw new Error(
       "Failed to generate confirmation token. Please try again later."
     );
