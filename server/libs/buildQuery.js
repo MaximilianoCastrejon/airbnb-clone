@@ -73,21 +73,26 @@ const datePaths = Object.keys(schema.schema.paths).filter(
       // queryItem = "price_$gt_2000"
       let [field, operator, filterValue] = queryItem.split("_");
       if (numberPaths.includes(field)) {
-        if (field === "createdAt") {
-          operator === ">"
-            ? (filterValue = new Date(filterValue).setUTCHours(0, 0, 0, 0))
-            : (filterValue = new Date(filterValue).setUTCHours(
-                23,
-                59,
-                59,
-                999
-              ));
-        } else {
-          filterValue = Number(filterValue);
+                  filterValue = Number(filterValue);
+        } else if (datePaths.includes(field)) {
+        const date = new Date(filterValue);
+        if (date === "Invalid Date") {
+          messages.push(
+            `Date field '${field}' in model '${schema.modelName}' did not match date format`
+          );
+          continue;
         }
-        processedQuery[field] = { [operator]: filterValue };
+        operator === ">"
+          ? date.setUTCHours(0, 0, 0, 0)
+          : date.setUTCHours(23, 59, 59, 999);
+        filterValue = date.toISOString();
+      } else {
+        messages.push(
+          `${field} in query did not match any numeric field in ${schema.modelName}`
+        );
       }
-    }
+      processedQuery[field] = { [operator]: filterValue };
+          }
   }
 
   // query = {"result":true, "count":42}
