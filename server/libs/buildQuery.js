@@ -150,14 +150,13 @@ return [count, messages];
         : 10;
 
     const totalDocuments = await schema.countDocuments(processedQuery);
-    const totalPages =       Math.ceil(totalDocuments / limit) ?? 1;
+    const totalPages = Math.ceil(totalDocuments / limit) ?? 1;
     const skipToLastPage = totalPages - 1;
     const pagesSkiped = page - 1;
-    const toPage =       limit * (page <= totalPages ? pagesSkiped : skipToLastPage);
+    const toPage = limit * (page <= totalPages ? pagesSkiped : skipToLastPage);
 
     result = result.skip(toPage).limit(limit);
-    return result;
-  }
+      }
 
   if (populate && populate.lenght > 0) {
     const pop = populate
