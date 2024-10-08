@@ -156,7 +156,7 @@ return [count, messages];
     return result;
   }
 
-  if (populate) {
+  if (populate && populate.lenght > 0) {
     const pop = populate
       .split(",")
       .forEach((item) => {
