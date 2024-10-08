@@ -6,8 +6,9 @@ import * as async_errors from "../errors/errors.barrel.js";
  * @param {mongoose.Schema} model
  * @param {Object} fields
  * @returns {Object}
+ * @throws {Error->message, status}
  */
-export const createDocument = async (model, fields) => {
+const createDocument = async (model, fields) => {
   for (const field of Object.keys(fields)) {
     if (typeof field !== "string")
       throw new async_errors.BadRequestError(`Key "${field}" is not a string`);
@@ -54,3 +55,5 @@ export const createDocument = async (model, fields) => {
 
   return document;
 };
+
+export default createDocument;

@@ -11,12 +11,11 @@ import sharp from "sharp";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import Listing from "../models/listings/listing/listing.model.js";
 import Review from "../models/listings/listing/review.model.js";
-import User from "../models/user.model.js";
-import { buildQuery } from "../libs/buildQuery.js";
-import { createDocument } from "../libs/createDocument.js";
-import DiscountCode from "../models/discount.code.model.js";
-import Category from "../models/listings/category.model.js";
-import checkDiscountValidity from "../libs/validateDiscount.js";
+import createDocument from "../libs/createDocument.js";
+import ReservationType from "../models/listings/reservation.type.model.js";
+import queryDocs from "../libs/queryDocs.js";
+import * as async_errors from "../errors/errors.barrel.js";
+import SubCategory from "../models/listings/subcategory.model.js";
 
 export const getListings = async (req, res) => {
   const {

@@ -10,7 +10,7 @@ import { randomImageName } from "../libs/createID.js";
 import sharp from "sharp";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import ListingPhoto from "../models/listings/listing/photo.model.js";
-import { createDocument } from "../libs/createDocument.js";
+import createDocument from "../libs/createDocument.js";
 /*---------------------Photos---------------------*/
 export const getPhotos = async (req, res) => {
   res.status(StatusCodes.OK).json({});

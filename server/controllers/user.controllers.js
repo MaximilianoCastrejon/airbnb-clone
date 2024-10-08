@@ -1,7 +1,7 @@
 import * as async_errors from "../errors/errors.barrel.js";
 import { StatusCodes } from "http-status-codes";
 import { buildQuery } from "../libs/buildQuery.js";
-import { createDocument } from "../libs/createDocument.js";
+import createDocument from "../libs/createDocument.js";
 import User from "../models/user.model.js";
 
 export const getUsers = async (req, res) => {

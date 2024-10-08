@@ -1,7 +1,7 @@
 import { StatusCodes } from "http-status-codes";
 import * as async_errors from "../errors/errors.barrel.js";
 import { buildQuery } from "../libs/buildQuery.js";
-import { createDocument } from "../libs/createDocument.js";
+import createDocument from "../libs/createDocument.js";
 import Currency from "../models/currency.model.js";
 
 export const getCurrencies = async (req, res) => {

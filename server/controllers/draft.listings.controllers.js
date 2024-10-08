@@ -2,7 +2,7 @@ import * as async_errors from "../errors/errors.barrel.js";
 import { StatusCodes } from "http-status-codes";
 import { buildQuery } from "../libs/buildQuery.js";
 import DraftListing from "../models/listings/draft-listings/listing.model.js";
-import { createDocument } from "../libs/createDocument.js";
+import createDocument from "../libs/createDocument.js";
 import ListingPhoto from "../models/listings/listing/photo.model.js";
 import Address from "../models/address.model.js";
 import DraftAddress from "../models/listings/draft-listings/address.model.js";

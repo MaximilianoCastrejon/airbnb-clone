@@ -14,9 +14,9 @@ import { randomImageName } from "../libs/createID.js";
 import sharp from "sharp";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { TOKEN_SECRET } from "../config.js";
-import Listing from "../models/listings/listing/listing.model.js";
-import { createReferralCode } from "../libs/createReferalCode.js";
-import Address from "../models/address.model.js";
+import createReferralCode from "../libs/createReferalCode.js";
+import queryDocs from "../libs/queryDocs.js";
+import createDocument from "../libs/createDocument.js";
 
 export const user = async (req, res) => {
   const { email } = req.query;
