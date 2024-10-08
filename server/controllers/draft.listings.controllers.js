@@ -10,29 +10,10 @@ import Listing from "../models/listings/listing/listing.model.js";
 import DraftListingPhoto from "../models/listings/draft-listings/photo.model.js";
 
 export const getDraftListings = async (req, res) => {
-  const {
-    query,
-    numericFilters,
-    page,
-    offset,
-    projection,
-    populate,
-    sort,
-    count,
-  } = res.query;
-  const structureQuery = {
-    ...(projection && { projection }),
-    ...(page && offset && { pagination: { page, limit: offset } }),
-    ...(sort && { sort }),
-    ...(populate && { populate }),
-  };
-  const result = buildQuery(DraftListing, {
-    query: query,
-    numericFilters: numericFilters,
-    structure: structureQuery,
-    count: count,
-  });
-  res.status(StatusCodes.OK).json({ result });
+  const { result, messages } = await queryDocs(DraftListing, req.query);
+  if (!result) throw new async_errors.NotFoundError(messages.toString());
+  console.log(result);
+  res.status(StatusCodes.OK).json({ data: result });
 };
 
 export const getDraftListing = async (req, res) => {
