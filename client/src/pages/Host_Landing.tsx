@@ -1,73 +1,36 @@
-import { GOOGLE_API_KEY } from '../config';
-import Header_HostHomes from '../components/Header_HostHomes';
+import { GOOGLE_API_KEY } from '../config.js';
+import Header_Host_Landing from '../components/Header_Host_Landing.js';
 import { GoogleMap, useJsApiLoader } from '@react-google-maps/api';
 import { GOOGLE_MAPS_LIBRARIES } from '../config.js';
-import ServiceUnavailable from '../components/ServiceUnavailable';
+import ServiceUnavailable from '../components/ServiceUnavailable.js';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { GoogleAddressComponent } from '../interfaces/maps.interfaces.js';
-import axios from 'axios';
+import useCurrentLocation from '../hooks/useCurrentLocation.js';
+import useCustomError from '../hooks/useError.js';
+import { getCountryCenter } from '../utils/fetchPlaceDetails.js';
 
-function HostHomes() {
+function Host_Landing() {
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: GOOGLE_API_KEY,
     libraries: GOOGLE_MAPS_LIBRARIES
   });
   // TODO: change into a custom hook
 
-  const [mapCenter, setMapCenter] = useState<{
-    lat: number;
-    lng: number;
-  }>({
+  const [mapCenter, setMapCenter] = useState({
     lat: 0,
     lng: 0
   });
-  // https://maps.googleapis.com/maps/api/geocode/json?latlng=40.714224,-73.961452&key=YOUR_API_KEY
+  const [, setCenterError] = useCustomError();
+  const coords = useCurrentLocation();
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (location) => {
-          const { latitude, longitude } = location.coords;
-          centerCountry(latitude, longitude);
-        },
-        (error) => {
-          console.error('Error getting user location:', error);
-        }
-      );
-    } else {
-      console.log('Geolocation is not supported by this browser.');
-    }
+    getCountryCenter({ ...coords })
+      .then((center) => setMapCenter({ lat: center.lat, lng: center.lng }))
+      .catch((err) => setCenterError(err));
   }, []);
 
-  const centerCountry = async (lat: number, lng: number) => {
-    try {
-      const response = await axios.get(
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_API_KEY}`
-      );
-      const data = response.data;
-
-      if (data.status != 'OK') throw new Error('Geocoding API request failed');
-
-      const countryComponent = data.results[0].address_components.find(
-        (component: GoogleAddressComponent) =>
-          component.types.includes('country')
-      );
-      if (!countryComponent)
-        throw new Error('Country component not found in geocoding response.');
-
-      const isoCountry = countryComponent.short_name;
-      const countryCenterRes = await axios.get(
-        `https://maps.googleapis.com/maps/api/geocode/json?address=${isoCountry}&key=${GOOGLE_API_KEY}`
-      );
-      const countryCenter = countryCenterRes.data.results[0].geometry.location;
-      setMapCenter({ lat: countryCenter.lat, lng: countryCenter.lng });
-    } catch (error) {
-      console.error('Error positioning map center:', error);
-    }
-  };
   return (
     <div>
-      <Header_HostHomes />
+      <Header_Host_Landing />
       <div className="h-[calc(90vh-5rem)] mt-[10vh] flex flex-row px-20">
         <div className="w-1/2 flex flex-col justify-center items-center">
           <p className="text-primary text-5xl font-semibold mb-2">Airbnb it.</p>
@@ -153,136 +116,7 @@ function HostHomes() {
           Airbnb it with top-to-bottom protection
         </p>
         <div className="mx-auto md:w-[804px] mb-20">
-          <table className="border-collapse w-full border-neutral-500">
-            <thead>
-              <tr className="h-12 pb-6">
-                <th></th>
-                <th
-                  scope="col"
-                  className="pb-6 min-w-[148px] text-xl align-middle"
-                >
-                  Airbnb
-                </th>
-                <th
-                  scope="col"
-                  className="pb-6 min-w-[148px] text-xl align-middle"
-                >
-                  Competitors
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="border-t-2 border-neutral-200 h-20">
-                <th className="text-left tracking-tight text-xl font-semibold">
-                  Guest identity verification
-                </th>
-                <CheckSVG svgType="check" />
-                <CheckSVG svgType="check" />
-              </tr>
-              <tr className="">
-                <td colSpan={1} className="pb-6 text-base text-neutral-500">
-                  Our comprehensive verification system checks details such as
-                  name, address, government ID and more to confirm the identity
-                  of guests who book on Airbnb.
-                </td>
-                <td colSpan={2}></td>
-              </tr>
-              <tr className="border-t-2 border-neutral-200 h-20">
-                <th className="text-left tracking-tight text-xl font-semibold">
-                  Reservation screening{' '}
-                </th>
-                <CheckSVG svgType="check" />
-                <CheckSVG svgType="cross" />
-              </tr>
-              <tr className="">
-                <td colSpan={1} className="pb-6 text-base text-neutral-500">
-                  Our proprietary technology analyzes hundreds of factors in
-                  each reservation and blocks certain bookings that show a high
-                  risk for disruptive parties and property damage.
-                </td>
-                <td colSpan={2}></td>
-              </tr>
-              <tr className="border-t-2 border-neutral-200 h-20">
-                <th className="text-left tracking-tight text-xl font-semibold">
-                  $3M damage protection{' '}
-                </th>
-                <CheckSVG svgType="check" />
-                <CheckSVG svgType="cross" />
-              </tr>
-              <tr className="">
-                <td colSpan={1} className="pb-6 text-base text-neutral-500">
-                  Airbnb reimburses you for damage caused by guests to your home
-                  and belongings and includes these specialized protections:
-                </td>
-                <td colSpan={2}></td>
-              </tr>
-
-              <tr className="border-t-2 border-neutral-200 h-20">
-                <th className="text-left tracking-tight text-xl font-normal">
-                  Art & valuables{' '}
-                </th>
-                <CheckSVG svgType="check" />
-                <CheckSVG svgType="cross" />
-              </tr>
-              <tr className="border-t-2 border-neutral-200 h-20">
-                <th className="text-left tracking-tight text-xl font-normal">
-                  Auto & boat{' '}
-                </th>
-                <CheckSVG svgType="check" />
-                <CheckSVG svgType="cross" />
-              </tr>
-              <tr className="border-t-2 border-neutral-200 h-20">
-                <th className="text-left tracking-tight text-xl font-normal">
-                  Pet damage{' '}
-                </th>
-                <CheckSVG svgType="check" />
-                <CheckSVG svgType="cross" />
-              </tr>
-              <tr className="border-t-2 border-neutral-200 h-20">
-                <th className="text-left tracking-tight text-xl font-normal">
-                  Income loss
-                </th>
-                <CheckSVG svgType="check" />
-                <CheckSVG svgType="cross" />
-              </tr>
-              <tr className="border-t-2 border-neutral-200 h-20">
-                <th className="text-left tracking-tight text-xl font-normal">
-                  Deep cleaning
-                </th>
-                <CheckSVG svgType="check" />
-                <CheckSVG svgType="cross" />
-              </tr>
-
-              <tr className="border-t-2 border-neutral-200 h-20">
-                <th className="text-left tracking-tight text-xl font-semibold">
-                  $1M liability insurance
-                </th>
-                <CheckSVG svgType="check" />
-                <CheckSVG svgType="check" />
-              </tr>
-              <tr className="">
-                <td colSpan={1} className="pb-6 text-base text-neutral-500">
-                  You{'’'}re protected in the rare event that a guest gets hurt
-                  or their belongings are damaged or stolen.
-                </td>
-                <td colSpan={2}></td>
-              </tr>
-              <tr className="border-t-2 border-neutral-200 h-20">
-                <th className="text-left tracking-tight text-xl font-semibold">
-                  24-hour safety line
-                </th>
-                <CheckSVG svgType="check" />
-                <CheckSVG svgType="cross" />
-              </tr>
-              <tr className=" border-b-2 border-neutral-200">
-                <td colSpan={1} className="pb-6 text-base text-neutral-500">
-                  If you ever feel unsafe, our app provides one-tap access to
-                  specially-trained safety agents, day or night.
-                </td>
-                <td colSpan={2}></td>
-              </tr>
-            </tbody>
-          </table>
+          <ComparissonTable />
           <div className="mt-6 mb-10">
             <p className="text-neutral-500 mt-2">
               Comparison is based on public information and free offerings by
@@ -359,7 +193,136 @@ function HostHomes() {
   );
 }
 
-export default HostHomes;
+export default Host_Landing;
+
+function ComparissonTable() {
+  return (
+    <table className="border-collapse w-full border-neutral-500">
+      <thead>
+        <tr className="h-12 pb-6">
+          <th></th>
+          <th scope="col" className="pb-6 min-w-[148px] text-xl align-middle">
+            Airbnb
+          </th>
+          <th scope="col" className="pb-6 min-w-[148px] text-xl align-middle">
+            Competitors
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr className="border-t-2 border-neutral-200 h-20">
+          <th className="text-left tracking-tight text-xl font-semibold">
+            Guest identity verification
+          </th>
+          <CheckSVG svgType="check" />
+          <CheckSVG svgType="check" />
+        </tr>
+        <tr className="">
+          <td colSpan={1} className="pb-6 text-base text-neutral-500">
+            Our comprehensive verification system checks details such as name,
+            address, government ID and more to confirm the identity of guests
+            who book on Airbnb.
+          </td>
+          <td colSpan={2}></td>
+        </tr>
+        <tr className="border-t-2 border-neutral-200 h-20">
+          <th className="text-left tracking-tight text-xl font-semibold">
+            Reservation screening{' '}
+          </th>
+          <CheckSVG svgType="check" />
+          <CheckSVG svgType="cross" />
+        </tr>
+        <tr className="">
+          <td colSpan={1} className="pb-6 text-base text-neutral-500">
+            Our proprietary technology analyzes hundreds of factors in each
+            reservation and blocks certain bookings that show a high risk for
+            disruptive parties and property damage.
+          </td>
+          <td colSpan={2}></td>
+        </tr>
+        <tr className="border-t-2 border-neutral-200 h-20">
+          <th className="text-left tracking-tight text-xl font-semibold">
+            $3M damage protection{' '}
+          </th>
+          <CheckSVG svgType="check" />
+          <CheckSVG svgType="cross" />
+        </tr>
+        <tr className="">
+          <td colSpan={1} className="pb-6 text-base text-neutral-500">
+            Airbnb reimburses you for damage caused by guests to your home and
+            belongings and includes these specialized protections:
+          </td>
+          <td colSpan={2}></td>
+        </tr>
+
+        <tr className="border-t-2 border-neutral-200 h-20">
+          <th className="text-left tracking-tight text-xl font-normal">
+            Art & valuables{' '}
+          </th>
+          <CheckSVG svgType="check" />
+          <CheckSVG svgType="cross" />
+        </tr>
+        <tr className="border-t-2 border-neutral-200 h-20">
+          <th className="text-left tracking-tight text-xl font-normal">
+            Auto & boat{' '}
+          </th>
+          <CheckSVG svgType="check" />
+          <CheckSVG svgType="cross" />
+        </tr>
+        <tr className="border-t-2 border-neutral-200 h-20">
+          <th className="text-left tracking-tight text-xl font-normal">
+            Pet damage{' '}
+          </th>
+          <CheckSVG svgType="check" />
+          <CheckSVG svgType="cross" />
+        </tr>
+        <tr className="border-t-2 border-neutral-200 h-20">
+          <th className="text-left tracking-tight text-xl font-normal">
+            Income loss
+          </th>
+          <CheckSVG svgType="check" />
+          <CheckSVG svgType="cross" />
+        </tr>
+        <tr className="border-t-2 border-neutral-200 h-20">
+          <th className="text-left tracking-tight text-xl font-normal">
+            Deep cleaning
+          </th>
+          <CheckSVG svgType="check" />
+          <CheckSVG svgType="cross" />
+        </tr>
+
+        <tr className="border-t-2 border-neutral-200 h-20">
+          <th className="text-left tracking-tight text-xl font-semibold">
+            $1M liability insurance
+          </th>
+          <CheckSVG svgType="check" />
+          <CheckSVG svgType="check" />
+        </tr>
+        <tr className="">
+          <td colSpan={1} className="pb-6 text-base text-neutral-500">
+            You{'’'}re protected in the rare event that a guest gets hurt or
+            their belongings are damaged or stolen.
+          </td>
+          <td colSpan={2}></td>
+        </tr>
+        <tr className="border-t-2 border-neutral-200 h-20">
+          <th className="text-left tracking-tight text-xl font-semibold">
+            24-hour safety line
+          </th>
+          <CheckSVG svgType="check" />
+          <CheckSVG svgType="cross" />
+        </tr>
+        <tr className=" border-b-2 border-neutral-200">
+          <td colSpan={1} className="pb-6 text-base text-neutral-500">
+            If you ever feel unsafe, our app provides one-tap access to
+            specially-trained safety agents, day or night.
+          </td>
+          <td colSpan={2}></td>
+        </tr>
+      </tbody>
+    </table>
+  );
+}
 
 function CheckSVG({ svgType }: { svgType: string }) {
   return (

@@ -1,27 +1,18 @@
-import { useEffect, useRef, useState } from 'react';
-import { useAuth } from '../../context/AuthProvider';
+import { useEffect, useState } from 'react';
+import { useAuth } from '../../context/AuthProvider.tsx';
 import BookingCard from '../../components/BookingCard.tsx';
 import Footer from '../../components/Footer.tsx';
-import LoadingSkeleton_HostBookings from '../../components/LoadingSkeleton_HostBookings.tsx';
+import LoadingSkeleton_HostBookings from '../../components/host-dashboard/LoadingSkeleton_HostBookings.tsx';
 import {
-  NumericFieldsOfBooking,
   Reservations,
   Reservations_Count,
-  StringFieldsOfBooking,
   TabKey
 } from '../../interfaces/booking.interfaces.ts';
-import { fetchData } from '../../utils/axiosQueryURL.ts';
-import { NumericField } from '../../interfaces/query.interfaces.ts';
-// import fakeReservations from '../../fakeReservations.ts';
-type Query = {
-  key: TabKey;
-  query: Partial<StringFieldsOfBooking>;
-  numericFields: NumericField<Partial<NumericFieldsOfBooking>>[];
-  count: boolean;
-  endPoint: string;
-};
+import fetchData from '../../utils/fetchData.ts';
+import { getQueries } from './queries.ts';
+import { useNavigate } from 'react-router-dom';
+import useDebounce from '../../utils/debounce.ts';
 
-const reservationsPerPage = 4;
 const messages = {
   checking_out: 'You don’t have any guests checking out today or tomorrow.',
   current: 'You don’t have any guests staying with you right now.',
@@ -32,185 +23,39 @@ const messages = {
 
 function Today() {
   const { userContext } = useAuth();
+  const navigate = useNavigate();
 
-  const [loading, setLoading] = useState(true);
-  const [focused, setFocused] = useState<TabKey>('checking_out');
+  const [loadingReservations, setLoadingReservations] = useState(true);
   const [reservations, setReservations] = useState<Reservations | null>(null);
-  const [reservationsPage, setReservationsPage] = useState<Reservations | null>(
-    null
-  );
-
   const [currentPage, setCurrentPage] = useState(1);
 
   const [reservationsCount, setReservationsCount] =
     useState<Reservations_Count | null>(null);
 
-  const todayUTC = new Date().toISOString();
-  const oneMonthFromNowUTC = new Date();
-  oneMonthFromNowUTC.setMonth(oneMonthFromNowUTC.getMonth() + 1);
-  const oneMonthFromNowUTCString = oneMonthFromNowUTC.toISOString();
-
-  const activeFetch = useRef(0); // Ref to track if the fetch operation is the latest one
-  if (!userContext || !userContext?.id) {
-    return 'No context';
+  const [focused, setFocused] = useState<TabKey>('checking_out');
+  if (userContext === null) {
+    navigate('/');
+    return null;
   }
+  const loadData = useDebounce(() => {
+    fetchCurrentTabData(userContext.id, focused, currentPage)
+      .then((reservations) => setReservations(reservations))
+      .catch((err) => console.log('Reservations could not get retrieved', err));
+    fetchBookingCounts(userContext.id)
+      .then((counts) => setReservationsCount({ ...counts.bookingCounts }))
+      .catch((err) => console.log('Reservations could not get retrieved', err));
+    setLoadingReservations(false);
+  }, 2000);
 
   useEffect(() => {
-    const abortController = new AbortController();
-    const { signal } = abortController;
-    activeFetch.current += 1;
-    const fetchId = activeFetch.current;
+    setLoadingReservations(true);
+    loadData();
+  }, [focused, currentPage, userContext.id]);
 
-    fetchTabData(signal);
-    fetchReservations(focused, signal, fetchId);
-
-    return () => {
-      abortController.abort(); // Cleanup on component unmount or when effect re-runs
-    };
-  }, [focused, userContext?.id]);
-
-  const queries: Query[] = [
-    {
-      key: 'pending',
-      count: true,
-      endPoint: 'bookings',
-      query: { host_id: userContext.id, status: 'pending' },
-      numericFields: []
-    },
-    {
-      key: 'checking_out',
-      count: true,
-      endPoint: 'bookings',
-      query: { host_id: userContext.id },
-      numericFields: [
-        { name: 'check_out_date_UTC', operator: '=', value: todayUTC }
-      ]
-    },
-    {
-      key: 'current',
-      count: true,
-      endPoint: 'bookings',
-      query: { host_id: userContext.id, status: 'pending' },
-      numericFields: [
-        { name: 'check_in_date_UTC', operator: '<', value: todayUTC },
-        { name: 'check_out_date_UTC', operator: '>', value: todayUTC }
-      ]
-    },
-    {
-      key: 'upcoming_soon',
-      count: true,
-      endPoint: 'bookings',
-      query: { host_id: userContext.id, status: 'pending' },
-      numericFields: [
-        { name: 'check_in_date_UTC', operator: '>', value: todayUTC },
-        {
-          name: 'check_in_date_UTC',
-          operator: '<',
-          value: oneMonthFromNowUTCString
-        }
-      ]
-    },
-    {
-      key: 'upcoming',
-      count: true,
-      endPoint: 'bookings',
-      query: { host_id: userContext.id, status: 'pending' },
-      numericFields: [
-        {
-          name: 'check_in_date_UTC',
-          operator: '>',
-          value: oneMonthFromNowUTCString
-        }
-      ]
-    }
-  ];
-
-  const fetchTabData = (signal: AbortSignal) => {
-    const executeFetch = async () => {
-      try {
-        const responses = await fetchData<number, TabKey>({
-          queries,
-          signal
-        });
-
-        const fetched: { [key in TabKey]: number } & { totalCount: number } = {
-          checking_out: 0,
-          current: 0,
-          upcoming: 0,
-          upcoming_soon: 0,
-          pending: 0,
-          totalCount: 0
-        };
-
-        responses.forEach((response) => {
-          fetched[response.key as TabKey] = response.data;
-        });
-        const totalCount = Object.values(fetched).reduce(
-          (sum, value) => sum + (value || 0),
-          0
-        );
-        setReservationsCount({ ...fetched, totalCount });
-      } catch (error) {
-        console.log('Error:', error);
-        throw new Error('Reservations could not ge retrieved');
-      }
-    };
-    executeFetch();
-  };
-
-  const fetchReservations = (
-    query_tab: TabKey,
-    signal: AbortSignal,
-    fetchId: number
-  ) => {
-    // let result: Reservations;
-    setLoading(true);
-
-    async function executeFetch() {
-      try {
-        const query = queries.find((query) => query.key === query_tab);
-        if (query) {
-          const responseArr = await fetchData<Reservations, TabKey>({
-            queries: [query],
-            signal
-          });
-          const result: Reservations = {
-            reservations: responseArr[0].data.reservations
-          };
-
-          if (fetchId === activeFetch.current) {
-            setReservations(result);
-            setReservationsPage({ reservations: paginateReservations() });
-
-            setCurrentPage(1);
-            setLoading(false);
-          }
-        } else {
-          // result = { reservations: [] };
-          console.error(
-            `Query with key '${query_tab}' not found in 'queries' array.`
-          );
-        }
-      } catch (error) {
-        if (fetchId === activeFetch.current) {
-          setCurrentPage(1);
-          setLoading(false);
-        }
-        console.log('Error:', error);
-        throw new Error("Reservations couldn't be queried");
-      }
-    }
-    executeFetch();
-  };
-
-  const paginateReservations = () => {
-    if (reservations?.reservations) {
-      return reservations.reservations.slice(
-        (currentPage - 1) * reservationsPerPage,
-        currentPage * reservationsPerPage
-      );
-    }
-    return [];
+  const handleFocusChange = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    const target = e.target as HTMLButtonElement;
+    setFocused(target.name as TabKey);
   };
 
   const handlePageChange = (pageNumber: number) => {
@@ -223,7 +68,7 @@ function Today() {
           <div className="mt-10 text-[2rem] font-semibold leading-9 font-sans">
             Welcome back, {userContext?.username}
           </div>
-          {userContext?.listings && userContext?.listings.length > 0 && (
+          {userContext?.listings && (
             <div className="grid max-lg:grid-cols-2 max-xl:grid-cols-3 max-2xl:grid-cols-4 w-full justify-between">
               <div className="border border-neutral-200 rounded-lg">
                 <div className="p-4 pr-8">
@@ -268,74 +113,75 @@ function Today() {
           </div>
 
           <div className="w-full flex flex-row justify-start align-middle items-center mt-2 mb-6">
-            <div
-              id="checking_out"
+            <button
+              name="checking_out"
               className={`mr-2 hover:border-black text-sm border ${
                 focused === 'checking_out' &&
                 'border-black border-2 hover:border-none'
               }border-neutral-300 rounded-full pt-2 pb-2.5 px-4`}
-              onClick={() => {
-                setFocused('checking_out');
+              onClick={(e) => {
+                handleFocusChange(e);
               }}
             >
               Checking out ({reservationsCount?.checking_out})
-            </div>
-            <div
-              id="current"
+            </button>
+            <button
+              name="current"
               className={`mr-2 hover:border-black text-sm border ${
                 focused === 'current' &&
                 'border-black border-2 hover:border-none'
               }border-neutral-300 rounded-full pt-2 pb-2.5 px-4`}
-              onClick={() => {
-                setFocused('current');
+              onClick={(e) => {
+                handleFocusChange(e);
               }}
             >
               Currently hosting ({reservationsCount?.current})
-            </div>
-            <div
-              id="upcoming_soon"
+            </button>
+            <button
+              name="upcoming_soon"
               className={`mr-2 hover:border-black text-sm border ${
                 focused === 'upcoming_soon' &&
                 'border-black border-2 hover:border-none'
               }border-neutral-300 rounded-full pt-2 pb-2.5 px-4`}
-              onClick={() => {
-                setFocused('upcoming_soon');
+              onClick={(e) => {
+                handleFocusChange(e);
               }}
             >
               Arriving soon ({reservationsCount?.upcoming_soon})
-            </div>
-            <div
-              id="upcoming"
+            </button>
+            <button
+              name="upcoming"
               className={`mr-2 hover:border-black text-sm border ${
                 focused === 'upcoming' &&
                 'border-black border-2 hover:border-none'
               }border-neutral-300 rounded-full pt-2 pb-2.5 px-4`}
-              onClick={() => {
-                setFocused('upcoming');
+              onClick={(e) => {
+                handleFocusChange(e);
               }}
             >
               Upcoming ({reservationsCount?.upcoming})
-            </div>
-            <div
-              id="pending"
+            </button>
+            <button
+              name="pending"
               className={`mr-2 hover:border-black text-sm border ${
                 focused === 'pending' &&
                 'border-black border-2 hover:border-none'
               }border-neutral-300 rounded-full pt-2 pb-2.5 px-4`}
-              onClick={() => {
-                setFocused('pending');
+              onClick={(e) => {
+                handleFocusChange(e);
               }}
             >
               Pending review ({reservationsCount?.pending})
-            </div>
+            </button>
           </div>
           <div className="bg-neutral-100 w-full h-[12.5rem]">
-            {loading ? (
+            {loadingReservations ? (
               <LoadingSkeleton_HostBookings />
-            ) : reservationsPage?.reservations &&
-              reservationsPage?.reservations.length > 0 ? (
+            ) : reservations &&
+              reservations.reservations &&
+              reservations.reservations.length > 0 ? (
               <div className="grid grid-cols-4 h-full">
-                {reservationsPage.reservations.map((reserv) => (
+                {reservations.reservations.map((reserv) => (
                   <BookingCard reservation={reserv} focused={focused} />
                 ))}
               </div>
@@ -369,3 +215,51 @@ function Today() {
 }
 
 export default Today;
+
+const fetchBookingCounts = async (host_id: string) => {
+  const bookingCounts: { [key in TabKey]: number } & {
+    totalCount: number;
+  } = {
+    checking_out: 0,
+    current: 0,
+    upcoming: 0,
+    upcoming_soon: 0,
+    pending: 0,
+    totalCount: 0
+  };
+  try {
+    const queries = getQueries<TabKey>(
+      ['upcoming_soon', 'upcoming', 'pending', 'checking_out', 'current'],
+      host_id,
+      true
+    );
+    for (const query of queries) {
+      const response = await fetchData<number>({ ...query });
+      bookingCounts[query.id] = response.data;
+    }
+    bookingCounts.totalCount = Object.values(bookingCounts).reduce(
+      (sum, value) => sum + (value || 0),
+      0
+    );
+    return { bookingCounts };
+  } catch (error) {
+    return { bookingCounts };
+  }
+};
+
+const fetchCurrentTabData = async (
+  host_id: string,
+  focusedTab: TabKey,
+  currentPage: number
+) => {
+  try {
+    const query = getQueries<TabKey>([focusedTab], host_id, false, currentPage);
+    const responseArr = await fetchData<Reservations>({ ...query[0] });
+    const result: Reservations = {
+      reservations: responseArr.data.reservations
+    };
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};

@@ -12,7 +12,7 @@ import Notifications from './Notifications.tsx';
 import WishList from './WishList.tsx';
 import GiftCard from './GiftCard.tsx';
 import HelpCenter from './HelpCenter.tsx';
-import HostHomes from './HostHomes.tsx';
+import Host_Landing from './Host_Landing.tsx';
 import Refer from './Refer.tsx';
 import YourHome from './YourHome.tsx';
 import Account from './Account/Account.tsx';
@@ -22,12 +22,12 @@ import PaymentMethods from './Account/PaymentMethods.tsx';
 import Preferences from './Account/Preferences.tsx';
 import PrivacyAndSharing from './Account/PrivacyAndSharing.tsx';
 import Taxpayers from './Account/Taxpayers.tsx';
-import Hosting from './Host Mode/Hosting.tsx';
-import Today from './Host Mode/Today.tsx';
-import Calendar from './Host Mode/Calendar.tsx';
-import HostListings from './Host Mode/HostListings.tsx';
-import Inbox from './Host Mode/Inbox.tsx';
-import ListingForm from './Host Mode/ListingForm.tsx';
+import Hosting from './Host Dashboard/Hosting.tsx';
+import Today from './Host Dashboard/Today.tsx';
+import Calendar from './Host Dashboard/Calendar.tsx';
+import HostListings from './Host Dashboard/HostListings.tsx';
+import Inbox from './Host Dashboard/Inbox.tsx';
+import ListingForm from './Host Dashboard/ListingForm.tsx';
 import Testing from './Testing.tsx';
 
 export {
@@ -54,7 +54,7 @@ export {
   HelpCenter,
   Refer,
   YourHome,
-  HostHomes,
+  Host_Landing,
   Hosting,
   Inbox,
   Calendar,
