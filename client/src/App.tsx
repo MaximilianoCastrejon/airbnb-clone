@@ -8,6 +8,7 @@ import Header_User from './components/Header_User';
 function App() {
   return (
     <AuthProvider>
+      <div id="modal-root"></div>
       <Router>
         <Routes>
           <Route path="/" element={<Layout />}>

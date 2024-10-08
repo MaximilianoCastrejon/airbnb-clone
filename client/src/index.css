@@ -2,24 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
-#modal-container.modal-in {
-  transform: scale(1);
-}
-#modal-container.modal-in .modal-background {
-  background: rgba(0, 0, 0, 0);
-  animation: fadeIn 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
-}
-#modal-container.modal-in .modal-background .modal {
-  opacity: 0;
-  animation: scaleUp 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
-}
-#modal-container.modal-in.modal-out {
+.close {
   animation: quickScaleDown 0s 0.5s linear forwards;
 }
-#modal-container.modal-in.modal-out .modal-background {
+.modal-background.open {
+  animation: fadeIn 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+}
+.modal-background.close {
   animation: fadeOut 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
 }
-#modal-container.modal-in.modal-out .modal-background .modal {
+.modal.open {
+  animation: scaleUp 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+}
+.modal.close {
   animation: scaleDown 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
 }
 
