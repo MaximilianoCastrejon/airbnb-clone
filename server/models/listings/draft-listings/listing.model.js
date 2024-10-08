@@ -131,14 +131,14 @@ const DraftListingSchema = new mongoose.Schema(
       type: String,
       enum: ["immeadiate", "under_approval"],
     },
-    start_date_UTC: {
+    start_date_ISO: {
       type: Date,
       default: Date.now(),
     },
-    end_date_UTC: {
+    end_date_ISO: {
       type: Date,
     },
-    unavailable_period_UTC: {
+    unavailable_period_ISO: {
       from: { type: Date },
       to: {
         type: Date,

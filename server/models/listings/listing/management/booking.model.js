@@ -17,11 +17,11 @@ const BookingSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    check_in_date_UTC: {
+    check_in_date_ISO: {
       type: Date,
       required: true,
     },
-    check_out_date_UTC: {
+    check_out_date_ISO: {
       type: Date,
       required: true,
     },
@@ -53,7 +53,7 @@ const BookingSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    cancel_date_UTC: {
+    cancel_date_ISO: {
       type: Date,
     },
     refund_paid: {
@@ -66,7 +66,7 @@ const BookingSchema = new mongoose.Schema(
     effective_amount: {
       type: Number,
     },
-    booking_date_UTC: {
+    booking_date_ISO: {
       type: Date,
       require: true,
     },

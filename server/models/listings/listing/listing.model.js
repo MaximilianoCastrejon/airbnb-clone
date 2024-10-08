@@ -150,15 +150,15 @@ const ListingSchema = new mongoose.Schema(
       enum: ["immeadiate", "under_approval"],
       require: true,
     },
-    start_date_UTC: {
+    start_date_ISO: {
       type: Date,
       default: Date.now(),
       require: true,
     },
-    end_date_UTC: {
+    end_date_ISO: {
       type: Date,
     },
-    unavailable_period_UTC: {
+    unavailable_period_ISO: {
       from: { type: Date },
       to: {
         type: Date,
@@ -247,7 +247,7 @@ ListingSchema.pre(
 
     const ReservationType = await ReservationType.findById(
       original.Reservation_type
-);
+    );
     switch (ReservationType.name) {
       case "shared_room":
         this.select("-bedroom_count -bathrooms");
@@ -265,21 +265,21 @@ ListingSchema.pre(
   }
 );
 
-const toUTCStringMiddleware = (next) => {
+const toISOStringMiddleware = (next) => {
   const dateFields = Object.keys(this.schema.paths).filter(
     (path) => this[path] instanceof Date
   );
 
   dateFields.forEach((field) => {
     if (this[field]) {
-      this[field] = this[field].toUTCString();
+      this[field] = this[field].toISOString();
     }
   });
 
   next();
 };
 
-ListingSchema.pre("save", toUTCStringMiddleware);
+ListingSchema.pre("save", toISOStringMiddleware);
 
 const Listing = mongoose.model("Listing", ListingSchema);
 export default Listing;
