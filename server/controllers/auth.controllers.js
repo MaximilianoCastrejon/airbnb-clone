@@ -24,8 +24,8 @@ export const user = async (req, res) => {
   const { result: docs, messages } = await queryDocs(User, req.query);
   if (!docs) throw new async_errors.NotFoundError(messages.toString());
 
-    return res.status(StatusCodes.OK).json({ result: docs });
-  };
+  return res.status(StatusCodes.OK).json({ result: docs });
+};
 
 export const userDetails = async (req, res) => {
   const { id } = req.params;
@@ -45,24 +45,24 @@ export const userDetails = async (req, res) => {
 
 export const login = async (req, res) => {
   const { email, password } = req.body;
-// Validate form
+  // Validate form
   if (!email || !password)
     throw new async_errors.BadRequestError(
       "Include both the email and password"
     );
-// Query user
+  // Query user
   const userFound = await User.findOne({ email });
   if (!userFound)
     throw new async_errors.AuthenticationError("Verify email and password");
 
-// Compare passwords
+  // Compare passwords
   const isMatch = await bcrypt.compare(password, userFound.password);
   if (!isMatch) {
     throw new async_errors.AuthenticationError("Verify email and password");
   }
-// Create access token
+  // Create access token
   const token = await createAccessToken({ id: userFound._id });
-res.cookie("token", token, {
+  res.cookie("token", token, {
     secure: false,
     sameSite: "Lax",
     domain: "localhost",
@@ -70,11 +70,11 @@ res.cookie("token", token, {
 
   // Validate if user is a host
   const listings = await Listing.findOne({
-host_id: userFound._id,
+    host_id: userFound._id,
   }).countDocuments();
   userFound.listings = listings > 0 ? true : false;
 
-res.status(StatusCodes.OK).json({
+  res.status(StatusCodes.OK).json({
     id: userFound._id,
     username: userFound.username,
     email: userFound.email,
@@ -83,17 +83,12 @@ res.status(StatusCodes.OK).json({
   });
 };
 
-export const logout = async (req, res) => {
-  res.send("Hola");
-};
-
 export const signup = async (req, res) => {
   const { username, email, password } = req.body;
   if (!username || !email || !password) {
     throw new async_errors.BadRequestError("Please fill out every field");
   }
-
-  const buffer = await sharp(req.file.buffer) // Image uploaded thorugh multer
+  const buffer = await sharp(req.file.buffer)
     .resize({ height: 500, width: 500, fit: "contain" })
     .toBuffer();
 
@@ -127,7 +122,7 @@ export const signup = async (req, res) => {
     profile_image: imageName,
     referal_code: referralCode,
   };
-  const newUser = await User.create(user);
+  const newUser = await createDocument(User, user);
   if (!newUser)
     throw new async_errors.UnprocessableError("Data for user unprocessable");
   const token = await createAccessToken({ id: newUser._id });
@@ -156,7 +151,6 @@ export const verifyToken = async (req, res) => {
 
   jwt.verify(token, TOKEN_SECRET, async (error, user) => {
     if (error) return res.status(StatusCodes.UNAUTHORIZED).send(false);
-
     const userFound = await User.findById(user.id);
     if (!userFound) return res.status(StatusCodes.UNAUTHORIZED).send(false);
     return res.status(StatusCodes.OK).json({
