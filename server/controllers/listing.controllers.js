@@ -1,14 +1,4 @@
 import { StatusCodes } from "http-status-codes";
-import bcrypt from "bcryptjs";
-import { s3, s3Name } from "../db/s3.client.js";
-import {
-  GetObjectCommand,
-  NotFound,
-  PutObjectCommand,
-} from "@aws-sdk/client-s3";
-import { randomImageName } from "../libs/createID.js";
-import sharp from "sharp";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import Listing from "../models/listings/listing/listing.model.js";
 import Review from "../models/listings/listing/review.model.js";
 import createDocument from "../libs/createDocument.js";
@@ -141,13 +131,13 @@ export const updateReservationType = async (req, res) => {
   const { id } = req.params;
   const updates = req.body;
   const updatedReservationType = await ReservationType.findByIdAndUpdate(
-id,
-updates,
-{
-    new: true, // Return the updated document
-    runValidators: true, // Validate updates against the model schema
-  }
-);
+    id,
+    updates,
+    {
+      new: true, // Return the updated document
+      runValidators: true, // Validate updates against the model schema
+    }
+  );
 
   if (!updatedReservationType) {
     return res
@@ -161,4 +151,25 @@ export const deleteReservationType = async (req, res) => {
   console.log(id);
   await ReservationType.findByIdAndDelete(id);
   res.status(StatusCodes.OK).json({ message: "Deleted successfuly" });
+};
+
+export const getSubCategories = async (req, res) => {
+  const { result: docs, messages } = await queryDocs(SubCategory, req.query);
+  if (!docs) throw new async_errors.NotFoundError(messages.toString());
+  res.status(StatusCodes.OK).json({ result: docs });
+};
+export const getSubCategory = async (req, res) => {
+  res.status(StatusCodes.OK).json({});
+};
+export const postSubCategory = async (req, res) => {
+  const fields = req.body;
+  const result = await createDocument(SubCategory, fields);
+
+  res.status(StatusCodes.OK).json(result);
+};
+export const updateSubCategory = async (req, res) => {
+  res.status(StatusCodes.OK).json({});
+};
+export const deleteSubCategory = async (req, res) => {
+  res.status(StatusCodes.OK).json({});
 };
