@@ -1,14 +1,14 @@
 import { Router } from "express";
 import { handleAsyncError } from "../middleware/error-handler.middleware.js";
 import multer from "multer";
-import * as route from "../controllers/listings.controllers.js";
+import * as route from "../controllers/booking.controllers.js";
 const router = Router();
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 router.get("/booking/:id", handleAsyncError(route.userDetails));
-router.get("/bookings", handleAsyncError(route.userDetails));
+router.get("/bookings", handleAsyncError(route.getBookings));
 router.post("/booking", handleAsyncError(route.userDetails));
 router.put("/booking", handleAsyncError(route.userDetails));
 router.delete("/booking", handleAsyncError(route.userDetails));
