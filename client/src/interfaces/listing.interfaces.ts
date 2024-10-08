@@ -28,11 +28,11 @@ export interface Listing {
   security_cameras: boolean;
   weapons_around: boolean;
   dangerous_animals_around: boolean;
-  start_date_UTC: Date;
+  start_date_ISO: Date;
   cleaning_fees?: number;
   cleaning_fees_percentage?: number;
-  end_date_UTC?: Date;
-  unavailable_period_UTC?: {
+  end_date_ISO?: Date;
+  unavailable_period_ISO?: {
     from: Date;
     to: Date;
   };
@@ -74,11 +74,11 @@ export const ReservationTypeInitialState: ReservationType = {
   active: true
 };
 
-export const ListingInitialState: Listing = {
+export const ListingInitial: Listing = {
   title: '',
   host_id: '',
   description: '',
-  category: '',
+  reservation_type: ReservationTypeInitialState,
   subcategory: '',
   address: '',
   price_per_night: 0,
@@ -95,7 +95,7 @@ export const ListingInitialState: Listing = {
   accomodates_count: 0,
   availability_type: 'AVAILABLE',
   booking_acceptance_type: 'immediate',
-  start_date_UTC: new Date(),
+  start_date_ISO: new Date(),
   minimum_stay_duration: 0,
   maximum_stay_duration: 0,
   checkin_time: '',
@@ -105,21 +105,6 @@ export const ListingInitialState: Listing = {
   weapons_around: false,
   dangerous_animals_around: false,
   applicable_discounts: []
-};
-
-export interface ListingCategory {
-  _id: string;
-  name: Category | '';
-  description: string;
-  svg_icon_paths: [string];
-  active: boolean;
-}
-export const ListingCategoryInitialState: ListingCategory = {
-  _id: '',
-  name: '',
-  description: '',
-  svg_icon_paths: [''],
-  active: true
 };
 
 export interface ListingSubCategory {
@@ -139,51 +124,21 @@ export const ListingSubCategoryInitialState: ListingSubCategory = {
   active: true
 };
 
-// Essentials by category
-export type Category = 'Entire place' | 'Private room' | 'Shared room';
-
-export interface EntirePlaceFields {
-  bedroom_count: number;
-  bed_count: number;
-  bathrooms: number;
-}
-
-export interface PrivateRoomFields {
-  bedroom_count: number;
-  bed_count: number;
-  lockOnEveryBedroom: boolean;
-  private_bathroom_count: number;
-  dedicated_bathroom_count: number;
-  shared_bathroom_count: number;
-  encounterType: string;
-}
-// 'host' | 'family' | 'other_guests' | 'roommates';
-
-export interface SharedRoomFields {
-  bed_count: number;
-  bathrooms: number;
-}
-
-export const EntirePlaceInitialState: EntirePlaceFields = {
-  bedroom_count: 0,
-  bed_count: 0,
-  bathrooms: 0
-};
-
-export const PrivateRoomInitialState: PrivateRoomFields = {
-  bedroom_count: 0,
-  bed_count: 0,
-  lockOnEveryBedroom: false,
-  private_bathroom_count: 0,
-  dedicated_bathroom_count: 0,
-  shared_bathroom_count: 0,
-  encounterType: ''
-};
-
-export const SharedRoomInitialState: SharedRoomFields = {
-  bed_count: 0,
-  bathrooms: 0
-};
+export type EntirePlaceFields = Pick<
+  Listing,
+  'bedroom_count' | 'bed_count' | 'bathrooms'
+>;
+export type PrivateRoomFields = Pick<
+  Listing,
+  | 'bedroom_count'
+  | 'bed_count'
+  | 'lockOnEveryBedroom'
+  | 'private_bathroom_count'
+  | 'dedicated_bathroom_count'
+  | 'shared_bathroom_count'
+  | 'encounter_type'
+>;
+export type SharedRoomFields = Pick<Listing, 'bed_count' | 'bathrooms'>;
 
 const CurrencyStatus = {
   ACTIVE: 1,

@@ -5,8 +5,8 @@ export interface Booking {
   guest_id: string;
   host_id: string;
   cohosts: string[];
-  check_in_date_UTC: Date;
-  check_out_date_UTC: Date;
+  check_in_date_ISO: Date;
+  check_out_date_ISO: Date;
   price_per_night: number;
   total_reservation_cost: number;
   tax_paid: number;
@@ -14,12 +14,12 @@ export interface Booking {
   amount_paid: number;
   total_discounted_reservation_cost?: number;
   is_refund?: boolean;
-  cancel_date_UTC?: Date;
+  cancel_date_ISO?: Date;
   refund_paid?: number;
   transaction_id?: string;
   effective_amount?: number;
   discount_codes?: string[];
-  booking_date_UTC: Date;
+  booking_date_ISO: Date;
   status: 'pending' | 'confirmed' | 'cancelled';
   canceled_by_host?: boolean;
   createdAt?: Date;

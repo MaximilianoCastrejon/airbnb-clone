@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import axiosInstance from '../api/axios.instance';
 import { useAuth } from '../context/AuthProvider';
-import { Booking, TabKey } from '@interfaces/booking.interfaces';
+import { Booking, TabKey } from '../interfaces/booking.interfaces';
 import { UserDetails } from '../interfaces/auth.interfaces';
 
 function BookingCard({
@@ -47,8 +47,8 @@ function BookingCard({
           <div>
             <div className="block text-base">{guest?.username}</div>
             <div className="block text-base">
-              {reservation.check_in_date_UTC.toLocaleDateString()} -{' '}
-              {reservation.check_out_date_UTC.toLocaleDateString()}
+              {reservation.check_in_date_ISO.toLocaleDateString()} -{' '}
+              {reservation.check_out_date_ISO.toLocaleDateString()}
             </div>
           </div>
           <img
