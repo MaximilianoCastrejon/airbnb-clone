@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { LatLngLiteral } from '../interfaces/maps.interfaces';
 import { IPINFO_TOKEN } from '../config';
 
 type SuccessCallback = (position: {
@@ -25,7 +24,7 @@ const getIPLocation = (
 };
 
 const useCurrentLocation = () => {
-  const [clientLocation, setClientLocation] = useState<LatLngLiteral>({
+  const [clientLocation, setClientLocation] = useState({
     lat: 0,
     lng: 0
   });
