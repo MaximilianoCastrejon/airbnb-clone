@@ -113,13 +113,15 @@ CriteriaSchema.pre("save", async function (next) {
     for (const node of this.nestedCriteria) {
       await Criteria.findOneAndUpdate(
         { _id: node._id },
-        { $push: { parentCriteria: { $each: [this._id] } } }
+        { $push: { parentCriteria: { $each: [this._id] } } },
+        { skipHook: true }
       );
     }
     for (const node of this.parentCriteria) {
       await Criteria.findOneAndUpdate(
         { _id: node._id },
-        { $push: { nestedCriteria: { $each: [this._id] } } }
+        { $push: { nestedCriteria: { $each: [this._id] } } },
+        { skipHook: true }
       );
     }
     return next();
