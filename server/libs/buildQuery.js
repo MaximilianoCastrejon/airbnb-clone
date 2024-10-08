@@ -43,6 +43,7 @@ export const buildQuery = async (
   { query, numericFilters, structure, count = false }
 ) => {
   const processedQuery = {};
+  const messages = [];
 
   const stringPaths = Object.keys(schema.schema.paths).filter(
     (path) => schema.schema.paths[path].instance === "String"
@@ -111,12 +112,19 @@ const datePaths = Object.keys(schema.schema.paths).filter(
         processedQuery[key] = userQuery[key];
       } else if (booleanPaths.includes(key)) {
         processedQuery[key] = userQuery[key];
+} else {
+        messages.push(
+          `${key} in query did not match any string or boolean field in ${schema.modelName}`
+        );
       }
     }
   }
 
   let result = schema.find(processedQuery);
-  if (count) return await result.countDocuments();
+  if (count) {
+    const count = await result.countDocuments();
+return [count, messages];
+  }
 
   const { projection, sort, pagination, populate } = structure;
 
@@ -160,10 +168,9 @@ const datePaths = Object.keys(schema.schema.paths).filter(
       .join(" ");
     result = result.populate(pop);
   }
-  const orderedResult = await result;
+  const response = await result;
 
-  // Return the built query
-  return orderedResult;
+  return [response, messages];
 };
 
 function mapOperators(numericFilters) {
