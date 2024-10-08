@@ -60,6 +60,9 @@ export const buildQuery = async (
   const booleanPaths = Object.keys(schema.schema.paths).filter(
     (path) => schema.schema.paths[path].instance === "Boolean"
   );
+const datePaths = Object.keys(schema.schema.paths).filter(
+    (path) => schema.schema.paths[path].instance === "Date"
+  );
 
   if (numericFilters) {
     const numeric_query_arr = mapOperators(numericFilters).split(",");
