@@ -1,4 +1,4 @@
-import { LoginCredentials, VerifiedUser } from '@interfaces/auth.interfaces';
+import { LoginCredentials, User } from '../interfaces/auth.interfaces';
 import { AxiosResponse } from 'axios';
 import axiosInstance from './axios.instance';
 
@@ -18,11 +18,12 @@ export const loginUser = async (
 
 export const registerUser = async (
   credentials: FormData
-): Promise<AxiosResponse> => {
+): Promise<AxiosResponse<User>> => {
   try {
-    const res: AxiosResponse = await axiosInstance.post(
+    const res: AxiosResponse<User> = await axiosInstance.post(
       `/auth/signup`,
       credentials
+      // { headers: { 'Content-Type': 'multipart/form-data' } }
     );
     return res;
   } catch (error) {
@@ -30,14 +31,19 @@ export const registerUser = async (
   }
 };
 
-export const verifyToken = async (token: string): Promise<VerifiedUser> => {
+export const verifyToken = async (
+  token: string
+): Promise<AxiosResponse<User>> => {
   const config = {
     headers: {
       Authorization: `Bearer ${token}`
     }
   };
   try {
-    const res: VerifiedUser = await axiosInstance.get(`/auth/verify`, config);
+    const res: AxiosResponse<User> = await axiosInstance.get(
+      `/auth/verify`,
+      config
+    );
     return res;
   } catch (error) {
     throw error;

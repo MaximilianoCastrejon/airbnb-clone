@@ -8,10 +8,13 @@ import {
   LoginCredentials
 } from '../interfaces/auth.interfaces';
 import * as request from '../api/auth.ts';
+import useCustomError from '../hooks/useError.ts';
+import { RequiredKeys } from '../interfaces/types.interfaces.ts';
+import validateForm from '../utils/validateForm.ts';
+import { ValidationError } from '../interfaces/error.interfaces.ts';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// For whenever any of the context methods or fields want to be used
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) throw new Error('useAuth must be used within an AuthProvider');
@@ -25,13 +28,12 @@ interface AuthProviderProps {
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [userContext, setUserContext] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [errors, setErrors] = useState([]);
+  const [loginError, setLoginError] = useCustomError();
+  const [signupError, setSignupError] = useCustomError();
+  const [validationError, setValidationError] = useCustomError();
   const [loading, setLoading] = useState(true);
 
-  // Function to log in the user
   const login = async (credentials: LoginCredentials) => {
-    // Implement your authentication logic here
-    // Set the user if authentication is successful
     request
       .loginUser(credentials)
       .then((res) => {
@@ -41,44 +43,52 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
       })
       .catch((error) => {
-        setErrors(error.response.data);
+        setLoginError(error);
       });
+    return isAuthenticated;
   };
 
   const signup = async (credentials: SignupCredentials) => {
-    // Implement your authentication logic here
-    // Set the user if authentication is successful
-
     const form_data = new FormData();
+    const RequiredCredentials: RequiredKeys<SignupCredentials>[] = [
+      'email',
+      'password',
+      'profile_image',
+      'username'
+    ];
+    try {
+      const validatedCredentials = await validateForm<SignupCredentials>(
+        credentials,
+        RequiredCredentials
+      );
 
-    if (
-      credentials.email &&
-      credentials.password &&
-      credentials.username &&
-      credentials.profile_image
-    ) {
-      form_data.append('email', credentials.email);
-      form_data.append('password', credentials.password);
-      form_data.append('username', credentials.username);
-      form_data.append('profile_image', credentials.profile_image);
-    } else {
-      return alert('Please fill out every field');
-    }
-
-    request
-      .registerUser(form_data)
-      .then((res) => {
-        if (res.status === 200) {
-          setUserContext(res.data);
-          setIsAuthenticated(true);
+      Object.keys(validatedCredentials).forEach((key) => {
+        const field = key as keyof SignupCredentials;
+        const value = validatedCredentials[field];
+        if (value !== undefined) {
+          console.log(value);
+          form_data.append(key, value as string | Blob);
         }
-      })
-      .catch((error) => {
-        setErrors(error.response.data.message);
       });
+      for (const pair of form_data.entries()) {
+        console.log(`${pair[0]}: ${pair[1]}`);
+      }
+      const registered = await request.registerUser(form_data);
+      if (registered.status === 200) {
+        setUserContext(registered.data);
+        setIsAuthenticated(true);
+      }
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        setSignupError(error, { context: 'Required fields missing' });
+      } else {
+        setSignupError(error, {
+          context: 'Failed registration. Try again later'
+        });
+      }
+    }
   };
 
-  // Function to log out the user
   const logout = () => {
     Cookies.remove('token');
     setUserContext(null);
@@ -90,42 +100,47 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const cookiesList = Cookies.get();
       if (!cookiesList.token) {
         setIsAuthenticated(false);
+        setUserContext(null);
         setLoading(false);
-        return true;
+        return;
       }
-
-      try {
-        const res = await request.verifyToken(cookiesList.token);
-        if (!res.data) {
-          return setIsAuthenticated(false);
-        }
-        setIsAuthenticated(true);
-        setUserContext(res.data);
-        setLoading(false);
-      } catch (error) {
-        setIsAuthenticated(false);
-        setLoading(false);
-      }
+      request
+        .verifyToken(cookiesList.token)
+        .then((res) => {
+          if (!res.data) {
+            setIsAuthenticated(false);
+            setUserContext(null);
+            return;
+          }
+          setIsAuthenticated(true);
+          setUserContext(res.data);
+        })
+        .catch((error) => {
+          setValidationError(error, {
+            context: 'Login unsuccessful. Token validation failed.'
+          });
+          setIsAuthenticated(false);
+          setUserContext(null);
+        })
+        .finally(() => setLoading(false));
     };
     isLoggedIn();
   }, []);
-
-  const clearErrors = () => {
-    setErrors([]);
-  };
 
   const contextValue: AuthContextType = {
     userContext,
     login,
     logout,
     signup,
-    clearErrors,
     isAuthenticated,
-    errors,
+    loginError,
+    signupError,
+    setLoginError,
+    setSignupError,
+    validationError,
     loading
   };
 
-  // function AuthProvider() {
   return (
     <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
   );
