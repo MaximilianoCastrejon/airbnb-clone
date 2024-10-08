@@ -1,4 +1,6 @@
-export const createReferralCode = function (referrerFirstName) {
+import crypto from "crypto";
+
+const createReferralCode = function (referrerFirstName) {
   const length = 6;
   const randomDigit = (Math.random() * 10) % 1;
   const chars =
@@ -10,3 +12,5 @@ export const createReferralCode = function (referrerFirstName) {
   }
   return referrerFirstName + randomDigit + randomString;
 };
+
+export default createReferralCode;
