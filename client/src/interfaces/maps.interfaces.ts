@@ -1,3 +1,5 @@
+import { GoogleMapProps } from '@react-google-maps/api';
+
 export interface GoogleAddressComponent {
   long_name: string;
   short_name: string;
@@ -21,10 +23,10 @@ export type LatLngLiteral = google.maps.LatLngLiteral;
 export type GeocoderAddressComponent = google.maps.GeocoderAddressComponent;
 export type AutocompleteType = google.maps.places.Autocomplete;
 export type AutocompletePrediction = google.maps.places.AutocompletePrediction;
-export interface MapComponentProps {
+export type MapComponentProps = {
   center: LatLngLiteral;
   zoom: number;
-}
+} & GoogleMapProps;
 
 export type Library =
   | 'core'

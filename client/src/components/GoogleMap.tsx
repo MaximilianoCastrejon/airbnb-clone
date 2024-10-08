@@ -5,47 +5,47 @@ import {
   Autocomplete
 } from '@react-google-maps/api';
 import ServiceUnavailable from './ServiceUnavailable';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   MapComponentProps,
   AutocompletePrediction
 } from '../interfaces/maps.interfaces';
 import { GOOGLE_MAPS_LIBRARIES } from '../config.ts';
 import useCurrentLocation from '../hooks/useCurrentLocation.ts';
-import {
-  FetchLocationResponse,
-  PlaceState
-} from '../interfaces/address.interfaces.ts';
+import { PlaceState } from '../interfaces/address.interfaces.ts';
 import GoogleMapsListingPin from './GoogleMapsListingPin.tsx';
 import { InputEvent } from '../interfaces/input.interfaces.ts';
-import { fetchLocationDetails } from '../utils/fetchPlaceDetails.ts';
-import debounce from 'lodash.debounce';
+import { getLocationDetails } from '../utils/fetchPlaceDetails.ts';
+import paths from '../assets/svg_paths.js';
+import useDebounce from '../utils/debounce.ts';
+
+interface GoogleMapComponentProps {
+  getDetails?: (details: PlaceState) => void;
+  coords?: (LatLng: { lat: number; lng: number }) => void;
+}
 
 const GoogleMapComponent = ({
-  setPlaceDetails
-}: {
-  setPlaceDetails?: {
-    FullAddress: (place: PlaceState) => void;
-    LatLng: (LatLng: { lat: number; lng: number }) => void;
-  };
-}) => {
+  getDetails,
+  coords
+}: GoogleMapComponentProps) => {
   const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: GOOGLE_API_KEY,
     libraries: GOOGLE_MAPS_LIBRARIES
   });
-  const [displayUseCurrentPositionButton, setDisplayUseCurrentPositionButton] =
-    useState(false);
-  const [displayPredictions, setDisplayPredictions] = useState(false);
+  const [showNavigateArrow, setShowNavigateArrow] = useState(false);
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
+  const [displayPredictions, setDisplayPredictions] = useState(false);
   const [predictions, setPredictions] = useState<AutocompletePrediction[]>([]);
-  const [addressInput, setAddressInput] = useState(String);
+  const [addressInput, setAddressInput] = useState('');
   const [isAutocompleteServiceLoading, setIsAutocompleteServiceLoading] =
     useState(false);
   const initialPosition = useCurrentLocation();
-  const requestCount = useRef(0);
-  const currentRequestId = useRef(0); // Ref to keep track of the current request ID
+
+  useEffect(() => {
+    addressInput && autocompleteService(addressInput);
+  }, [addressInput]);
 
   useEffect(() => {
     if (map && map.getCenter()) {
@@ -54,182 +54,136 @@ const GoogleMapComponent = ({
         const lat = center.lat();
         const lng = center.lng();
 
-        if (setPlaceDetails) {
-          setPlaceDetails.LatLng({ lat, lng });
+        if (coords) {
+          coords({ lat, lng });
         }
       }
     }
   }, [map?.getCenter()?.lat(), map?.getCenter()?.lng()]);
 
-  const MapComponent: React.FC<MapComponentProps> = ({ center, zoom }) => {
-    return (
-      <GoogleMap
-        center={center}
-        zoom={zoom}
-        mapContainerStyle={{ width: '100%', height: '100%' }}
-        options={{
-          zoomControl: true,
-          scrollwheel: false,
-          streetViewControl: false,
-          mapTypeControl: false,
-          fullscreenControl: false,
-          styles: [
-            {
-              featureType: 'poi',
-              stylers: [{ visibility: 'off' }]
-            }
-          ]
-        }}
-        onLoad={(map) => {
-          setMap(map);
-          // Add a listener to prevent zooming with the touchpad
-          map.addListener('wheel', (event: WheelEvent) => {
-            if (event.ctrlKey) {
-              event.preventDefault(); // Prevent zooming with Ctrl + mouse wheel
-            }
-          });
+  const autocompleteService = useDebounce((inputValue: string) => {
+    if (map && inputValue) {
+      const bounds = map.getBounds();
+      AutocompleteService.getPlacePredictions(
+        {
+          input: inputValue,
+          locationBias: bounds || null,
+          types: ['geocode', 'establishment']
+        },
+        (predictions) => {
+          setPredictions(predictions || []);
+          setDisplayPredictions(true);
+          setIsAutocompleteServiceLoading(false);
+        }
+      );
+    } else {
+      setPredictions([]);
+      setIsAutocompleteServiceLoading(false);
+    }
+  }, 1000);
 
-          // Optional: Disable pinch-to-zoom
-          map.addListener('touchstart', (event: TouchEvent) => {
-            event.preventDefault(); // Prevent zooming with touch gestures
-          });
-        }}
-        onDragStart={() => setIsDragging(true)}
-        onDragEnd={() => setIsDragging(false)}
-      />
+  const MapComponent: React.FC<MapComponentProps> = ({ ...props }) => {
+    return (
+      <div></div>
+      // <GoogleMap
+      //   mapContainerStyle={{ width: '100%', height: '100%' }}
+      //   options={{
+      //     zoomControl: true,
+      //     scrollwheel: false,
+      //     streetViewControl: false,
+      //     mapTypeControl: false,
+      //     fullscreenControl: false,
+      //     styles: [
+      //       {
+      //         featureType: 'poi',
+      //         stylers: [{ visibility: 'off' }]
+      //       }
+      //     ]
+      //   }}
+      //   {...props}
+      // />
     );
   };
-
-  // initialPosition included as dependency for when the position is fetched
   const memoizedMapComponent = useMemo(() => {
-    return <MapComponent center={initialPosition} zoom={13} />;
+    return (
+      <MapComponent
+        center={initialPosition}
+        zoom={13}
+        onDragStart={() => setIsDragging(true)}
+        onDragEnd={() => setIsDragging(false)}
+        onLoad={(map) => {
+          setMap(map);
+          map.addListener('wheel', (event: WheelEvent) => {
+            if (event.ctrlKey) {
+              event.preventDefault();
+            }
+          });
+          map.addListener('touchstart', (event: TouchEvent) => {
+            event.preventDefault();
+          });
+        }}
+      />
+    );
   }, [initialPosition]);
 
   if (!isLoaded || loadError) return <div>Loading...</div>;
+  // LOAD AUTOCOMPLETE SERVICE
   const AutoService = google.maps.places.AutocompleteService;
   const AutocompleteService = new AutoService();
 
-  const autocompleteService = debounce((inputValue: string) => {
-    if (map) {
-      const bounds = map.getBounds();
-
-      const requestId = ++currentRequestId.current; // Increment and get the new request ID
-      console.log(`Input Value: ${inputValue}`); // Log the request ID for debugging
-      if (inputValue) {
-        AutocompleteService.getPlacePredictions(
-          {
-            input: inputValue,
-            locationBias: bounds || null,
-            types: ['geocode', 'establishment']
-          },
-          (predictions) => {
-            if (currentRequestId.current === requestId) {
-              setPredictions(predictions || []);
-              setDisplayPredictions(true);
-              setIsAutocompleteServiceLoading(false); // Set loading to false after fetching predictions
-            }
-          }
-        );
-      } else {
-        setPredictions([]);
-        setIsAutocompleteServiceLoading(false);
-      }
-    }
-    setIsAutocompleteServiceLoading(false);
-  }, 1000);
-
+  //TODO: Fix loading and navigation arrow when user deletes input
   const handleInputChange = (event: InputEvent) => {
-    const isUserTyping = event.target.value.length > 0;
-
-    isUserTyping
-      ? setDisplayUseCurrentPositionButton(false)
-      : setDisplayUseCurrentPositionButton(true);
-
+    const value = event.target.value;
+    setShowNavigateArrow(value.length > 0);
     const inputValue = event.target.value;
     setAddressInput(inputValue);
     setIsAutocompleteServiceLoading(true);
-    autocompleteService(inputValue);
   };
 
   const setPlace = async ({
-    lat,
-    lng,
-    place_id
+    id,
+    coords
   }: {
-    lat?: number;
-    lng?: number;
-    place_id?: string;
+    id?: string;
+    coords: { lat: number; lng: number };
   }) => {
-    if (!setPlaceDetails)
-      return console.log(
-        'Set state action in the following shape required: {address_components: google.maps.GeocoderAddressComponent[], lat: number, lng: number};'
-      );
-
-    let place: PlaceState = {} as PlaceState;
-
     setLoadingData(true);
     setPredictions([]);
     try {
-      if (place_id) {
-        const response: FetchLocationResponse =
-          await fetchLocationDetails.PlaceId(place_id);
-        if (!response.loading && response.error) {
-          throw new Error('Error fetching data for current location');
-        }
-        const location =
-          response.placeDetails.lat && response.placeDetails.lng
-            ? {
-                lat: response.placeDetails.lat,
-                lng: response.placeDetails.lng
-              }
-            : undefined;
-        const mapCenter =
-          map?.getCenter() != undefined
-            ? { lat: map.getCenter()!.lat(), lng: map.getCenter()!.lng() }
-            : initialPosition;
+      let details: PlaceState;
+      details = id
+        ? await getLocationDetails({ id, coords })
+        : await getLocationDetails({ coords });
 
-        const center = location ? { ...location } : mapCenter;
-        const address_components = response.placeDetails.address_components;
-
-        if (!address_components || !response.placeDetails.place_id) return;
-        place = {
-          place_id: response.placeDetails.place_id,
-          address_components: address_components,
-          lat: center.lat,
-          lng: center.lng
-        };
-      }
-      if (lat && lng) {
-        const response = await fetchLocationDetails.currentLocation(lat, lng);
-        if (!response.loading && response.error) {
-          throw new Error('Error fetching data for current location');
-        }
-        const address_components = response.placeDetails.address_components;
-        if (!address_components || !response.placeDetails.place_id) return;
-        place = {
-          place_id: response.placeDetails.place_id,
-          address_components: address_components,
-          lat: lat,
-          lng: lng
-        };
-      }
-      setPlaceDetails.FullAddress(place);
-
-      if (!place.lat || !place.lng || !map) return;
+      if (!details || !details.lat || !details.lng || !map)
+        throw new Error('Coordinates cannot be processed on the map');
+      if (getDetails) getDetails(details);
       map.setZoom(18);
-      map.panTo({ lat: place.lat, lng: place.lng });
+      map.panTo({ lat: details.lat, lng: details.lng });
     } catch (error) {
       console.log(error);
-      throw new Error('Geocoding API request failed');
     }
     setLoadingData(false);
-    setDisplayUseCurrentPositionButton(false);
+    setShowNavigateArrow(false);
+  };
+
+  const handlePredictionClick = (
+    prediction: google.maps.places.AutocompletePrediction
+  ) => {
+    setAddressInput(prediction.description);
+    setPlace({
+      id: prediction.place_id,
+      coords: {
+        lat: map?.getCenter()?.lat() || initialPosition.lat,
+        lng: map?.getCenter()?.lng() || initialPosition.lng
+      }
+    });
   };
 
   return (
     <div className="h-[50vh] mt-[10vh] w-full flex flex-row">
       <div className="w-full rounded-lg overflow-hidden relative">
-        {isLoaded && setPlaceDetails && (
+        {isLoaded && (
           <>
             <div className="absolute right-0 left-0 items-center mx-4 mt-6 bg-white menu-shadow rounded-lg z-20 ">
               <div className="flex focus-within:outline p-4 rounded-lg">
@@ -249,10 +203,7 @@ const GoogleMapComponent = ({
                     ></path>
                   </svg>
                 </div>
-                <Autocomplete
-                  // onLoad={(el) => setAutocomplete(el)}
-                  className="flex-1"
-                >
+                <Autocomplete className="flex-1">
                   <input
                     type="text"
                     className="w-full border-none outline-none"
@@ -261,12 +212,11 @@ const GoogleMapComponent = ({
                     onFocus={() => {
                       predictions.length > 0
                         ? setDisplayPredictions(true)
-                        : setDisplayUseCurrentPositionButton(true);
+                        : setShowNavigateArrow(true);
                     }}
                     onBlur={() => {
                       setTimeout(() => {
-                        !loadingData &&
-                          setDisplayUseCurrentPositionButton(false);
+                        !loadingData && setShowNavigateArrow(false);
                         setDisplayPredictions(false);
                       }, 200);
                     }}
@@ -274,13 +224,15 @@ const GoogleMapComponent = ({
                   ></input>
                 </Autocomplete>
               </div>
-              {displayUseCurrentPositionButton && predictions.length <= 0 && (
+              {showNavigateArrow && addressInput.length === 0 && (
                 <div
                   className="p-2 mt-4 hover:bg-neutral-300 hover:cursor-pointer "
                   onClick={() => {
                     setPlace({
-                      lat: initialPosition.lat,
-                      lng: initialPosition.lng
+                      coords: {
+                        lat: initialPosition.lat,
+                        lng: initialPosition.lng
+                      }
                     });
                   }}
                 >
@@ -296,7 +248,7 @@ const GoogleMapComponent = ({
                         aria-hidden="true"
                         focusable="false"
                       >
-                        <path d="M10.84 16.35c-.17.41-.61.72-1.05.64A1.04 1.04 0 0 1 9 16V9H1.94a.94.94 0 0 1-.36-1.8l13.1-5.12a.95.95 0 0 1 1.04.2c.28.27.36.67.2 1.03z"></path>
+                        <path d={paths.NAVIGATION_ARROW}></path>
                       </svg>
                     </div>
                     <div className="flex-1 flex items-center">
@@ -316,8 +268,7 @@ const GoogleMapComponent = ({
                         className="p-2 hover:bg-neutral-300 hover:cursor-pointer"
                         key={prediction.place_id}
                         onClick={() => {
-                          setAddressInput(prediction.description);
-                          setPlace({ place_id: prediction.place_id });
+                          handlePredictionClick(prediction);
                         }}
                       >
                         <div className="w-full flex ">
@@ -331,29 +282,7 @@ const GoogleMapComponent = ({
                               preserveAspectRatio="xMidYMid meet"
                             >
                               <g transform="translate(0, 0) scale(0.2) rotate(180)">
-                                <path
-                                  fill="#000"
-                                  d="M1448 4202 l-928 -155 0 -1874 0 -1873 -260 0 -260 0 0 -150 0 -150
-                                  2560 0 2560 0 0 150 0 150 -260 0 -260 0 0 1680 0 1680 -945 0 -945 0 0 -1680
-                                  0 -1680 -150 0 -150 0 0 2030 c0 1927 -1 2030 -17 2029 -10 -1 -435 -71 -945
-                                  -157z m542 -392 l0 -150 -160 0 -160 0 0 150 0 150 160 0 160 0 0 -150z
-                                  m-732 -732 l3 -148 -161 0 -160 0 0 150 0 151 158 -3 157 -3 3 -147z
-                                  m730 0 l3 -148 -161 0 -160 0 0 150 0 151 158 -3 157 -3 3 -147z
-                                  m1462 2 l0 -150 -160 0 -160 0 0 143 c0 79 3 147 7 150 3 4 75 7 160 7
-                                  l153 0 0 -150z m730 0 l0 -150 -160 0 -160 0 0 143 c0 79 3 147 7 150
-                                  3 4 75 7 160 7 l153 0 0 -150z m-2922 -737 l-3 -148 -157 -3 -158 -3
-                                  0 151 0 150 160 0 161 0 -3 -147z m730 0 l-3 -148 -157 -3 -158 -3 0 151
-                                  0 150 160 0 161 0 -3 -147z m1462 -3 l0 -151 -157 3 -158 3 -3 148 -3 147
-                                  161 0 160 0 0 -150z m730 0 l0 -151 -157 3 -158 3 -3 148 -3 147 161 0
-                                  160 0 0 -150z m-2922 -727 l-3 -148 -157 -3 -158 -3 0 151 0 150 160 0
-                                  161 0 -3 -147z m732 -3 l0 -150 -160 0 -160 0 0 150 0 150 160 0 160 0
-                                  0 -150z m1460 0 l0 -150 -160 0 -160 0 0 150 0 150 160 0 160 0 0 -150z
-                                  m730 0 l0 -151 -157 3 -158 3 -3 148 -3 147 161 0 160 0 0 -150z m-2200 -945
-                                  l0 -365 -150 0 -150 0 0 215 0 215 -215 0 -215 0 0 -215 0 -215 -150 0 -150 0
-                                  0 365 0 365 515 0 515 0 0 -365z m1470 215 l0 -150 -160 0 -160 0 0 150 0 150
-                                  160 0 160 0 0 -150z m730 0 l0 -150 -160 0 -160 0 0 150 0 150 160 0 160 0
-                                  0 -150z"
-                                />
+                                <path fill="#000" d={paths.BUILDINGS} />
                               </g>
                             </svg>
                           </div>
@@ -385,7 +314,7 @@ const GoogleMapComponent = ({
           {isLoaded && (
             <div className="w-full h-full">{memoizedMapComponent}</div>
           )}
-          {isLoaded && setPlaceDetails && (
+          {isLoaded && (
             <div
               id="pin-container"
               className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-full pointer-events-none ${
