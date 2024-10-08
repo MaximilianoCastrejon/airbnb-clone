@@ -8,8 +8,8 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await connectDB();
 
-    app.listen(PORT, () => {
-      console.log("listening in port", PORT, "...");
+    app.listen(PORT, "localhost", () => {
+      console.log("listening in localhost in port", PORT, "...");
       console.log(
         `DB Conection established. Server is listening in port: ${PORT}`
       );
