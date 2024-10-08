@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute';
 import * as page from './pages';
 import Layout from './Layout';
-import UserHeader from './components/Header_User';
+import Header_User from './components/Header_User';
 
 function App() {
   return (
@@ -16,7 +16,7 @@ function App() {
           </Route>
 
           <Route element={<ProtectedRoute />}>
-            <Route element={<UserHeader />}>
+            <Route element={<Header_User />}>
               <Route path="/trips" element={<page.Trips />} />
               <Route path="/account" element={<page.Account />} />
               <Route
@@ -63,7 +63,7 @@ function App() {
             </Route>
             <Route path="/airbnb-your-home" element={<page.YourHome />} />
             {/* Hosting promotion page */}
-            <Route path="/host/homes" element={<page.HostHomes />} />
+            <Route path="/host/homes" element={<page.Host_Landing />} />
             <Route path="/refer" element={<page.Refer />} />
             <Route path="/gift-card" element={<page.GiftCard />} />
             <Route path="/help-center" element={<page.HelpCenter />} />
