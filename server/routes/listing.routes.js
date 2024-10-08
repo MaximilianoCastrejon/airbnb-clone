@@ -20,11 +20,17 @@ router.post("/review", handleAsyncError(route.userDetails));
 router.put("/review", handleAsyncError(route.userDetails));
 router.delete("/review", handleAsyncError(route.userDetails));
 
-router.get("/category/:id", handleAsyncError(route.getCategory));
-router.get("/categories", handleAsyncError(route.queryCategories));
-router.post("/category", handleAsyncError(route.createCategory));
-router.patch("/category/:id", handleAsyncError(route.updateCategory));
-router.delete("/category/:id", handleAsyncError(route.deleteCategory));
+router.get("/reservation-type/:id", handleAsyncError(route.getReservationType));
+router.get("/reservation-types", handleAsyncError(route.queryReservationTypes));
+router.post("/reservation-type", handleAsyncError(route.createReservationType));
+router.patch(
+  "/reservation-type/:id",
+handleAsyncError(route.updateReservationType)
+);
+router.delete(
+  "/reservation-type/:id",
+handleAsyncError(route.deleteReservationType)
+);
 
 router.get("/sub-category/:id", handleAsyncError(route.userDetails));
 router.get("/sub-categories", handleAsyncError(route.userDetails));

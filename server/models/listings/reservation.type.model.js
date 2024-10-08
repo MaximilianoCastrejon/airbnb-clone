@@ -9,7 +9,7 @@ Single room
   - types of bathrooms
  */
 
-const CategorySchema = new mongoose.Schema(
+const ReservationTypeSchema = new mongoose.Schema(
   {
     name: {
       type: String,
@@ -35,5 +35,8 @@ const CategorySchema = new mongoose.Schema(
   }
 );
 
-const Category = mongoose.model("Category", CategorySchema);
-export default Category;
+const ReservationType = mongoose.model(
+  "ReservationType",
+  ReservationTypeSchema
+);
+export default ReservationType;

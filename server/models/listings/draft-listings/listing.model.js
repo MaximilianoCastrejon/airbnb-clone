@@ -40,9 +40,9 @@ const DraftListingSchema = new mongoose.Schema(
     description: {
       type: String,
     },
-    category: {
+    reservation_type: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Category",
+      ref: "ReservationType",
     },
     subcategory: {
       type: mongoose.Schema.Types.ObjectId,

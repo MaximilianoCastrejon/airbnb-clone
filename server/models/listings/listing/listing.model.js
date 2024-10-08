@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import Category from "../category.model.js";
+import ReservationType from "../reservation.type.model.js";
 import { Db } from "mongodb";
 
 // Custom validator function for latitude
@@ -12,7 +12,7 @@ const validateLongitude = (value) => {
   return value >= -180 && value <= 180;
 };
 
-// Depending on the category, some fields do not apply
+// Depending on the ReservationType, some fields do not apply
 const ListingSchema = new mongoose.Schema(
   {
     title: {
@@ -35,9 +35,9 @@ const ListingSchema = new mongoose.Schema(
       type: String,
       require: true,
     },
-    category: {
+    reservation_type: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Category",
+      ref: "ReservationType",
       require: true,
     },
     subcategory: {
@@ -243,8 +243,12 @@ ListingSchema.pre(
   async function (next) {
     const docCount = await Listing.countDocuments({}, { hint: "_id_" });
     if (docCount === 0) return next();
-    const category = await Category.findById(this.category);
-    switch (category.name) {
+    const original = await this.model.findOne(this.getQuery()).lean();
+
+    const ReservationType = await ReservationType.findById(
+      original.Reservation_type
+);
+    switch (ReservationType.name) {
       case "shared_room":
         this.select("-bedroom_count -bathrooms");
         break;

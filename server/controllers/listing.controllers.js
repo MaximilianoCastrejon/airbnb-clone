@@ -186,60 +186,45 @@ export const deleteReview = async (req, res) => {
 }
 */
 
-export const getCategory = async (req, res) => {
+export const getReservationType = async (req, res) => {
   res.status(StatusCodes.OK).json({});
 };
-export const queryCategories = async (req, res) => {
-  const {
-    query,
-    numericFilters,
-    projection,
-    sort,
-    page,
-    offset,
-    populate,
-    count,
-  } = req.query;
-
-  const structureQuery = {
-    ...(projection && { projection }),
-    ...(page && offset && { pagination: { page, limit: offset } }),
-    ...(sort && { sort }),
-    ...(populate && { populate }),
-  };
-
-  const result = await buildQuery(Category, {
-    query: query,
-    numericFilters: numericFilters,
-    structure: structureQuery,
-    count: count,
-  });
-  res.status(StatusCodes.OK).json(result);
+export const queryReservationTypes = async (req, res) => {
+  const { result: docs, messages } = await queryDocs(
+    ReservationType,
+    req.query
+  );
+  if (!docs) throw new async_errors.NotFoundError(messages.toString());
+  res.status(StatusCodes.OK).json({ result: docs });
 };
-export const createCategory = async (req, res) => {
+export const createReservationType = async (req, res) => {
   const fields = req.body;
-  const result = await createDocument(Category, fields);
+  const result = await createDocument(ReservationType, fields);
 
   res.status(StatusCodes.OK).json(result);
 };
-export const updateCategory = async (req, res) => {
+export const updateReservationType = async (req, res) => {
   const { id } = req.params;
   const updates = req.body;
-  const updatedCategory = await Category.findByIdAndUpdate(id, updates, {
+  const updatedReservationType = await ReservationType.findByIdAndUpdate(
+id,
+updates,
+{
     new: true, // Return the updated document
     runValidators: true, // Validate updates against the model schema
-  });
+  }
+);
 
-  if (!updatedCategory) {
+  if (!updatedReservationType) {
     return res
       .status(StatusCodes.NOT_FOUND)
-      .send({ message: "Category not found" });
+      .send({ message: "ReservationType not found" });
   }
-  res.status(StatusCodes.OK).json(updatedCategory);
+  res.status(StatusCodes.OK).json(updatedReservationType);
 };
-export const deleteCategory = async (req, res) => {
+export const deleteReservationType = async (req, res) => {
   const { id } = req.params;
   console.log(id);
-  await Category.findByIdAndDelete(id);
+  await ReservationType.findByIdAndDelete(id);
   res.status(StatusCodes.OK).json({ message: "Deleted successfuly" });
 };
