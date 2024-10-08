@@ -45,23 +45,36 @@ export const userDetails = async (req, res) => {
 
 export const login = async (req, res) => {
   const { email, password } = req.body;
+// Validate form
   if (!email || !password)
     throw new async_errors.BadRequestError(
       "Include both the email and password"
     );
+// Query user
   const userFound = await User.findOne({ email });
   if (!userFound)
     throw new async_errors.AuthenticationError("Verify email and password");
 
+// Compare passwords
   const isMatch = await bcrypt.compare(password, userFound.password);
   if (!isMatch) {
     throw new async_errors.AuthenticationError("Verify email and password");
   }
+// Create access token
   const token = await createAccessToken({ id: userFound._id });
-  const listings = await Listing.find({ host_id: userFound._id });
-  userFound.listings = listings || []; // Ensure it's an array
-  res.cookie("token", token);
-  return res.status(StatusCodes.OK).json({
+res.cookie("token", token, {
+    secure: false,
+    sameSite: "Lax",
+    domain: "localhost",
+  });
+
+  // Validate if user is a host
+  const listings = await Listing.findOne({
+host_id: userFound._id,
+  }).countDocuments();
+  userFound.listings = listings > 0 ? true : false;
+
+res.status(StatusCodes.OK).json({
     id: userFound._id,
     username: userFound.username,
     email: userFound.email,
