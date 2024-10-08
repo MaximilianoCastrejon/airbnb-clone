@@ -1,7 +1,12 @@
 import mongoose from "mongoose";
 import DiscountCode from "../models/discount.code.model.js";
 import Criteria from "../models/criteria.model.js";
+import UserDiscountCode from "../models/user.discounts.model.js";
+import ListingDiscountCode from "../models/listing.discount.model.js";
+import User from "../models/user.model.js";
+import Listing from "../models/listings/listing/listing.model.js";
 
+//TODO: Change function to use graphLookup
 async function populateNestedCriteria(criterion) {
   let populatedCriteria;
   try {
@@ -29,6 +34,10 @@ async function populateNestedCriteria(criterion) {
 async function validateDiscount(context, discountCode, criteriaType) {
   let discount;
   try {
+    if ((criteriaType !== "user") | "listing" | "booking")
+      throw new Error(
+        "criteriaType has not been properly set. Available options: 'user' | 'listing' | 'booking' "
+      );
     discount = await DiscountCode.findOne({ code: discountCode }).populate({
       path: "criteria",
     });
@@ -52,8 +61,8 @@ async function validateDiscount(context, discountCode, criteriaType) {
 
   //Validate parent nodes
   for (const rootCriterion of populatedCriteria) {
+    if (!isEligible) continue;
     isEligible = await validateNestedCriteria(rootCriterion, context);
-    if (!isEligible) break; // Exit the loop if not eligible
   }
 
   return isEligible;
@@ -185,7 +194,93 @@ const validation = (result) => {
   if (result === "unsuccessful") return false;
 };
 
-export default validateDiscount;
+async function bookingCheckoutDiscountValidity(
+  user_id,
+  listing_id,
+  checkout_context
+) {
+  let validDiscounts = [];
+  try {
+    const userContext = await User.findById(user_id);
+    const listingContext = await Listing.findById(listing_id);
+    if (!userContext || !listingContext)
+      throw new Error(
+        "User or Listing do not exist. Discounts cannot be validated"
+      );
+    const [userDiscounts, listingDiscounts] = await Promise.all([
+      UserDiscountCode.find({ user_id }),
+      ListingDiscountCode.find({
+        listing_id,
+      }),
+    ]);
+
+    const matchingDiscounts = userDiscounts.filter((userDiscount) =>
+      listingDiscounts.some((listingDiscount) =>
+        listingDiscount.discount_code_id.equals(userDiscount.discount_code_id)
+      )
+    );
+
+    for (const discountCode of matchingDiscounts) {
+      const currentUserDiscountCode = userDiscounts.find((doc) =>
+        doc.discount_code_id.equals(code.discount_code_id)
+      );
+      const currentListingDiscountCode = listingDiscounts.find((doc) =>
+        doc.discount_code_id.equals(code.discount_code_id)
+      );
+      if (isCodeExpired(discountCode)) continue;
+      if (
+        isCodeExhausted(
+          discountCode,
+          currentUserDiscountCode,
+          currentListingDiscountCode
+        )
+      )
+        continue;
+
+      const [isUserEligible, isListingEligible, isBookingEligible] =
+        await Promise.all([
+          validateDiscount(userContext, discountCode, "user"),
+          validateDiscount(listingContext, discountCode, "listingg"),
+          validateDiscount(checkout_context, discountCode, "booking"),
+        ]);
+
+      if (!isListingEligible || !isUserEligible || !isBookingEligible) {
+        throw new Error(discountCode.not_applicable_message);
+      }
+      validDiscounts.push(discountCode);
+    }
+
+    const discountCodes = await DiscountCode.find({
+      code: { $in: validDiscounts },
+    });
+    return discountCodes;
+  } catch (error) {
+    console.log("Error:", error);
+  }
+}
+
+const isCodeExpired = (code) => {
+  if (Date.now() > code.expirationDate || Date.now() < code.startDate) {
+    return true;
+  }
+};
+
+const isCodeExhausted = (code, userDiscount, listingDiscount) => {
+  // Validate the number of usages. If -1, uses are infinite
+  const usesAvailable =
+    (code.max_number_of_uses === -1 ||
+      code.current_uses < code.max_number_of_uses) &&
+    (code.max_number_of_uses_per_user === -1 ||
+      userDiscount.current_uses < code.max_number_of_uses_per_user) &&
+    (code.max_number_of_uses_per_listing === -1 ||
+      listingDiscount.current_uses < code.max_number_of_uses_per_listing);
+
+  if (!usesAvailable) {
+    return true;
+  }
+};
+
+export default bookingCheckoutDiscountValidity;
 
 /*
 [

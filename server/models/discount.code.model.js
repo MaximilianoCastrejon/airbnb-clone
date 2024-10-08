@@ -1,10 +1,12 @@
 import mongoose from "mongoose";
 import Criteria from "./criteria.model.js";
+import UserDiscountCode from "./user.discounts.model.js";
+import ListingDiscountCode from "./listing.discount.model.js";
 
 const DiscountCodeSchema = new mongoose.Schema(
   {
-    name: { type: String, require: true },
-    code: { type: String, require: true, unique: true },
+    name: { type: String, require: true, trim: true },
+    code: { type: String, require: true, unique: true, trim: true },
     discount: { type: Number, require: true },
     max_number_of_uses: { type: Number }, // If value is -1, it has no max number of uses
     current_uses: { type: Number, default: 0 },
@@ -74,7 +76,7 @@ DiscountCodeSchema.pre("save", async function (next) {
 });
 DiscountCodeSchema.pre("findOneAndUpdate", async function (next) {
   try {
-    const doc = await this.model.findOne(this.getQuery()).lean();
+    const doc = await this.model.findOne(this.getFilter()).lean();
     const allCrtieriaAreRoots = await validateCriteriaAsRoots(doc);
     if (!allCrtieriaAreRoots) {
       const error = new Error(
@@ -86,6 +88,20 @@ DiscountCodeSchema.pre("findOneAndUpdate", async function (next) {
   } catch (error) {
     console.error(
       `Error validating criteria for the discount: ${error.message}`
+    );
+    return next(error);
+  }
+});
+
+DiscountCodeSchema.pre("findOneAndDelete", async function (next) {
+  try {
+    const doc = await this.model.findOne(this.getFilter()).lean();
+    await UserDiscountCode.deleteMany({ discount_code_id: doc._id });
+    await ListingDiscountCode.deleteMany({ discount_code_id: doc._id });
+    return next();
+  } catch (error) {
+    console.error(
+      `Error deleting the code from Listings and Users: ${error.message}`
     );
     return next(error);
   }

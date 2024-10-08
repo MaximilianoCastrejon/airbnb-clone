@@ -11,30 +11,28 @@ router.post("/code/doc/", handleAsyncError(route.generateDiscountCode));
 router.patch("/code/doc/:id", handleAsyncError(route.updateDiscount));
 router.delete("/code/doc/:id", handleAsyncError(route.deleteDiscount));
 
-/*************CRITERIA*************/
-
-router.get("/criteria/components/:id", handleAsyncError(route.getCriterion));
-router.get("/criteria/components/", handleAsyncError(route.getCriteria));
-router.post("/criteria/components/", handleAsyncError(route.createCriterion));
-router.patch(
-  "/criteria/components/:id",
-  handleAsyncError(route.updateCriterion)
-);
-router.delete(
-  "/criteria/components/:id",
-  handleAsyncError(route.deleteCriterion)
-);
-
 /*************USER*************/
 router.get(
   "/code/validate/user/:id",
   handleAsyncError(route.checkUserDiscountValidity)
+);
+router.get("/user/codes/", handleAsyncError(route.getUserCodes));
+router.post("/user/code/", handleAsyncError(route.createUserCode));
+router.delete(
+  "/user/:user_id/code/:code_id",
+  handleAsyncError(route.deleteUserCode)
 );
 
 /*************LISTING*************/
 router.get(
   "/code/validate/listing/:id",
   handleAsyncError(route.checkListingDiscountValidity)
+);
+router.get("/listing/codes/", handleAsyncError(route.getListingCodes));
+router.post("/listing/code/", handleAsyncError(route.createListingCode));
+router.delete(
+  "/listing/:listing_id/code/:code_id",
+  handleAsyncError(route.deleteListingCode)
 );
 
 /*************BOOKING*************/
