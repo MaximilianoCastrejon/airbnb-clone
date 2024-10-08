@@ -1,8 +1,9 @@
-import { Address } from '@interfaces/address.interfaces';
+import { GeocoderAddressComponent } from '@interfaces/maps.interfaces';
+import { Address } from '../interfaces/address.interfaces';
 // TODO: Modify in order to accomodate to multiple forms of matching the type to the field
 // Example sublocality_level_1 is not always the first index in the types array
 export const getGeocoderAddressComponents = (
-  addressComponents: google.maps.GeocoderAddressComponent[]
+  addressComponents: GeocoderAddressComponent[]
 ): Address => {
   let extractedData: Partial<Address> = {};
 

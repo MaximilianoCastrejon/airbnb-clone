@@ -1,3 +1,5 @@
+import { GeocoderAddressComponent } from './maps.interfaces';
+
 export interface Address {
   street_name: string;
   street_number: number | null;
@@ -36,11 +38,11 @@ export type PlaceState = {
   place_id: string;
   lat: number;
   lng: number;
-  address_components: google.maps.GeocoderAddressComponent[]; // Assuming you're using Google Maps PlaceResult type
+  address_components: GeocoderAddressComponent[] | []; // Can be empty array because the user can fill out the fields for the listing form
 };
 
 export type FetchLocationResponse = {
-  placeDetails: Partial<PlaceState>;
+  placeDetails: PlaceState;
   loading: boolean;
   error: string;
 };
