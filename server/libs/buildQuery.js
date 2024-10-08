@@ -140,18 +140,21 @@ return [count, messages];
   }
 
   if (pagination) {
-    const page = Number(pagination.page) || 1;
-    const limit = Number(pagination.limit) || 10;
+    const page =
+      pagination.page !== undefined && Number(pagination.page) > 0
+        ? Number(pagination.page)
+        : 1;
+    const limit =
+      pagination.limit !== undefined && Number(pagination.limit) > 0
+        ? Number(pagination.limit)
+        : 10;
 
-    // Solutions: Use two queries || use a function inbetween facets of the pipeline to get totalDocuments
     const totalDocuments = await schema.countDocuments(processedQuery);
-    const totalPages =
-      Math.ceil(totalDocuments / limit) === 0
-        ? 1
-        : Math.ceil(totalDocuments / limit);
+    const totalPages =       Math.ceil(totalDocuments / limit) ?? 1;
+    const skipToLastPage = totalPages - 1;
+    const pagesSkiped = page - 1;
+    const toPage =       limit * (page <= totalPages ? pagesSkiped : skipToLastPage);
 
-    const toPage =
-      limit * (page <= totalPages ? (page < 1 ? 0 : page - 1) : totalPages - 1);
     result = result.skip(toPage).limit(limit);
     return result;
   }
